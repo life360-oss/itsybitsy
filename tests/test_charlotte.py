@@ -135,7 +135,7 @@ def test_init_case_spins_charlotte_web(charlotte_d, mocker):
     spin_up_func.assert_called()
 
 
-def test_init_case_wellformed_crawlstrategy_yaml(charlotte_d, mocker):
+def test_init_case_wellformed_crawlstrategy_yaml(charlotte_d, cli_args_mock, mocker):
     """Charlotte loads a well formed crawl_strategy from yaml into memory"""
     # `charlotte_d` referenced in test signature only for patching of the tmp dir - fixture unused in test function
     # arrange
@@ -143,7 +143,7 @@ def test_init_case_wellformed_crawlstrategy_yaml(charlotte_d, mocker):
         'Foo', 'Foo CrawlStrategy', ['bar'], 'BAZ', {'command': 'uptime'}, {'type': 'matchAll', 'provider': 'buz'},
         {'only': ['foo-service']}, {'ugly-foo': 'pretty-foo'}
     )
-    mocker.patch('itsybitsy.node.constants.ARGS', skip_protocols=[])
+    cli_args_mock.skip_protocols = []
     stub_protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', ref=protocol)
     mocker.patch('itsybitsy.charlotte.charlotte_web.spin_up')
     get_protocol_func = mocker.patch('itsybitsy.charlotte.charlotte_web.get_protocol', return_value=stub_protocol)

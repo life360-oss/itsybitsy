@@ -13,17 +13,11 @@ import pytest
 from unittest.mock import MagicMock
 
 
-# fixtures
 @pytest.fixture(autouse=True)
 def clear_caches():
     """Clear crawl.py caches between tests - otherwise our asserts for function calls may not pass"""
     crawl.service_name_cache = {}
     crawl.child_cache = {}
-
-
-@pytest.fixture
-def set_max_depth(mocker):
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100)
 
 
 @pytest.fixture
@@ -82,7 +76,7 @@ async def _wait_for_all_tasks_to_complete(event_loop):
 
 # Calls to ProviderInterface::open_connection
 @pytest.mark.asyncio
-async def test_crawl_case_connection_opened_and_passed(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_connection_opened_and_passed(tree, provider_mock, cs_mock):
     """Crawling a single node tree - connection is opened and passed to both lookup_name and crawl_downstream"""
     # arrange
     # mock provider
@@ -105,7 +99,7 @@ async def test_crawl_case_connection_opened_and_passed(tree, provider_mock, cs_m
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_open_connection_handles_timeout_exception(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_open_connection_handles_timeout_exception(tree, provider_mock, cs_mock):
     """Respects the contractual TimeoutException or ProviderInterface.  If thrown we set TIMEOUT error
     but do not stop crawling"""
     # arrange
@@ -120,7 +114,7 @@ async def test_crawl_case_open_connection_handles_timeout_exception(tree, provid
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, cs_mock, mocker):
     """A natural timeout during ProviderInterface::open_connections is also handled by setting TIMEOUT error"""
     # arrange
     mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
@@ -138,7 +132,7 @@ async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, c
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_open_connection_handles_exceptions(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_open_connection_handles_exceptions(tree, provider_mock, cs_mock):
     """Handle any other exceptions thrown by ProviderInterface::open_connection by exiting the program"""
     # arrange
     provider_mock.open_connection.side_effect = Exception('BOOM')
@@ -150,7 +144,7 @@ async def test_crawl_case_open_connection_handles_exceptions(tree, provider_mock
 
 # Calls to ProviderInterface::lookup_name
 @pytest.mark.asyncio
-async def test_crawl_case_lookup_name_uses_cache(tree, node_fixture_factory, provider_mock, set_max_depth):
+async def test_crawl_case_lookup_name_uses_cache(tree, node_fixture_factory, provider_mock):
     """Validate the calls to lookup_name for the same address are cached"""
     # arrange
     address = 'use_this_address_twice'
@@ -167,7 +161,7 @@ async def test_crawl_case_lookup_name_uses_cache(tree, node_fixture_factory, pro
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_lookup_name_handles_timeout(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_lookup_name_handles_timeout(tree, provider_mock, cs_mock, mocker):
     """Timeout is handled during lookup_name and results in a sys.exit"""
     # arrange
     mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
@@ -182,7 +176,7 @@ async def test_crawl_case_lookup_name_handles_timeout(tree, provider_mock, cs_mo
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_lookup_name_handles_exceptions(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_lookup_name_handles_exceptions(tree, provider_mock, cs_mock):
     """Any exceptions thrown by lookup_name are handled by exiting the program"""
     # arrange
     provider_mock.lookup_name.side_effect = Exception('BOOM')
@@ -195,8 +189,7 @@ async def test_crawl_case_lookup_name_handles_exceptions(tree, provider_mock, cs
 # Calls to ProviderInterface::crawl_downstream
 @pytest.mark.asyncio
 @pytest.mark.parametrize('name,crawl_expected,error', [(None, False, 'NAME_LOOKUP_FAILED'), ('foo', True, None)])
-async def test_crawl_case_crawl_downstream_based_on_name(name, crawl_expected, error, tree, provider_mock, cs_mock,
-                                                         set_max_depth):
+async def test_crawl_case_crawl_downstream_based_on_name(name, crawl_expected, error, tree, provider_mock, cs_mock):
     """Depending on whether provider.name_lookup() returns a name - we should or should not crawl_downstream()"""
     # arrange
     provider_mock.lookup_name.return_value = name
@@ -213,7 +206,7 @@ async def test_crawl_case_crawl_downstream_based_on_name(name, crawl_expected, e
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('attr', ['warnings', 'errors'])
-async def test_crawl_case_do_not_crawl_downstream_node_with_warns_errors(attr, tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_do_not_crawl_downstream_node_with_warns_errors(attr, tree, provider_mock, cs_mock):
     """We should not crawl_downstream for node with any arbitrary warning or error"""
     # arrange
     provider_mock.lookup_name.return_value = 'dummy_name'
@@ -227,8 +220,7 @@ async def test_crawl_case_do_not_crawl_downstream_node_with_warns_errors(attr, t
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_crawl_downstream_uses_cache(tree, node_fixture_factory, provider_mock, cs_mock,
-                                                      set_max_depth, event_loop):
+async def test_crawl_case_crawl_downstream_uses_cache(tree, node_fixture_factory, provider_mock, cs_mock, event_loop):
     """Validate the calls to crawl_downstream for the same address are cached.  Caching is only guaranteed for
     different branches in the tree since siblings execute concurrently - and so we have to test a tree with more
     depth > 1"""
@@ -252,7 +244,7 @@ async def test_crawl_case_crawl_downstream_uses_cache(tree, node_fixture_factory
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, cs_mock, mocker):
     """Timeout is respected during crawl_downstream and results in a sys.exit"""
     # arrange
     mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
@@ -271,7 +263,7 @@ async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, 
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_crawl_downstream_handles_exceptions(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_crawl_downstream_handles_exceptions(tree, provider_mock, cs_mock, mocker):
     """Any exceptions thrown by crawl_downstream are handled by exiting the program"""
     # arrange
     mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
@@ -285,7 +277,7 @@ async def test_crawl_case_crawl_downstream_handles_exceptions(tree, provider_moc
 
 # handle Cycles
 @pytest.mark.asyncio
-async def test_crawl_case_cycle(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_cycle(tree, provider_mock, cs_mock):
     """Cycles should be detected, name lookup should still happen for them, but crawl_downstream should not"""
     # arrange
     cycle_service_name = 'foops_i_did_it_again'
@@ -301,7 +293,7 @@ async def test_crawl_case_cycle(tree, provider_mock, cs_mock, set_max_depth):
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_service_name_rewrite_cycle_detected(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_service_name_rewrite_cycle_detected(tree, provider_mock, cs_mock):
     """Validate cycles are detected for rewritten service names"""
     # arrange
     cycle_service_name = 'foops_i_did_it_again'
@@ -327,7 +319,7 @@ async def test_crawl_case_service_name_rewrite_cycle_detected(tree, provider_moc
     ('foo_mux', None, None, None, [], ['NULL_ADDRESS']),
 ])
 async def test_crawl_case_crawl_results_parsed(protocol_mux, address, debug_identifier, num_connections, warnings, errors,
-                                               tree, provider_mock, cs_mock, set_max_depth, event_loop):
+                                               tree, provider_mock, cs_mock, event_loop):
     """Crawl results are parsed into Node objects.  We detect 0 connections as a "DEFUNCT" node.  `None` address
     is acceptable, but is detected as a "NULL_ADDRESS" node"""
     # arrange
@@ -354,7 +346,7 @@ async def test_crawl_case_crawl_results_parsed(protocol_mux, address, debug_iden
 
 # Recursive calls to crawl::crawl()
 @pytest.mark.asyncio
-async def test_crawl_case_children_with_address_crawled(tree, provider_mock, cs_mock, set_max_depth, event_loop, mocker):
+async def test_crawl_case_children_with_address_crawled(tree, provider_mock, cs_mock, event_loop, mocker):
     """Discovered children with an address are recursively crawled """
     # arrange
     child_nt = node.NodeTransport('dummy_protocol_mux', 'dummy_address')
@@ -375,7 +367,7 @@ async def test_crawl_case_children_with_address_crawled(tree, provider_mock, cs_
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_children_without_address_not_crawled(tree, provider_mock, cs_mock, set_max_depth, event_loop,
+async def test_crawl_case_children_without_address_not_crawled(tree, provider_mock, cs_mock, event_loop,
                                                                mocker):
     """Discovered children without an address are not recursively crawled """
     # arrange
@@ -394,7 +386,7 @@ async def test_crawl_case_children_without_address_not_crawled(tree, provider_mo
 
 # Hints
 @pytest.mark.asyncio
-async def test_crawl_case_hint_attributes_set(tree, provider_mock, hint_mock, set_max_depth, mocker, event_loop):
+async def test_crawl_case_hint_attributes_set(tree, provider_mock, hint_mock, mocker, event_loop):
     """For hints used in crawling... attributes are correctly translated from the Hint the Node"""
     # arrange
     mocker.patch('itsybitsy.charlotte_web.hints', return_value=[hint_mock])
@@ -415,7 +407,7 @@ async def test_crawl_case_hint_attributes_set(tree, provider_mock, hint_mock, se
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_hint_name_used(tree, provider_mock, hint_mock, set_max_depth, mocker, event_loop):
+async def test_crawl_case_hint_name_used(tree, provider_mock, hint_mock, mocker, event_loop):
     """Hint `debug_identifier` field is respected in crawling (and overwritten by new name, not overwritten by None)"""
     # arrange
     mocker.patch('itsybitsy.charlotte_web.hints', return_value=[hint_mock])
@@ -433,12 +425,12 @@ async def test_crawl_case_hint_name_used(tree, provider_mock, hint_mock, set_max
 
 # respect CLI args
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cli_skip_protocol_mux(tree, provider_mock, cs_mock, mocker, set_max_depth,
-                                                        event_loop):
+async def test_crawl_case_respect_cli_skip_protocol_mux(tree, provider_mock, cs_mock, cli_args_mock,
+                                                        mocker, event_loop):
     """Children discovered on these muxes are neither included in the tree - nor crawled"""
     # arrange
     skip_this_protocol_mux = 'foo_mux'
-    mocker.patch('itsybitsy.constants.ARGS.skip_protocol_muxes', [skip_this_protocol_mux])
+    cli_args_mock.skip_protocol_muxes = [skip_this_protocol_mux]
     child_nt = node.NodeTransport(skip_this_protocol_mux, 'dummy_address')
     provider_mock.lookup_name.return_value = 'bar_name'
     provider_mock.crawl_downstream.return_value = [child_nt]
@@ -454,11 +446,11 @@ async def test_crawl_case_respect_cli_skip_protocol_mux(tree, provider_mock, cs_
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cli_skip_protocols(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_respect_cli_skip_protocols(tree, provider_mock, cs_mock, cli_args_mock, mocker):
     """Crawling of protocols configured to be "skipped" does not happen at all."""
     # arrange
     skip_this_protocol = 'FOO'
-    mocker.patch('itsybitsy.constants.ARGS.skip_protocols', [skip_this_protocol])
+    cli_args_mock.skip_protocols = [skip_this_protocol]
     cs_mock.protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', autospec=True)
     cs_mock.protocol.ref = skip_this_protocol
     provider_mock.lookup_name.return_value = 'bar_name'
@@ -470,13 +462,13 @@ async def test_crawl_case_respect_cli_skip_protocols(tree, provider_mock, cs_moc
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cli_disable_providers(tree, provider_mock, cs_mock, set_max_depth, mocker,
+async def test_crawl_case_respect_cli_disable_providers(tree, provider_mock, cs_mock, cli_args_mock, mocker,
                                                         event_loop):
     """Children discovered which have been determined to use disabled providers - are neither included in the tree
     nor crawled"""
     # arrange
     disable_this_provider = 'foo_provider'
-    mocker.patch('itsybitsy.constants.ARGS.disable_providers', [disable_this_provider])
+    cli_args_mock.disable_providers = [disable_this_provider]
     child_nt = node.NodeTransport('dummy_mux', 'dummy_address')
     provider_mock.lookup_name.return_value = 'bar_name'
     provider_mock.crawl_downstream.return_value = [child_nt]
@@ -498,10 +490,10 @@ async def test_crawl_case_respect_cli_disable_providers(tree, provider_mock, cs_
 async def test_crawl_case_respect_cli_skip_nonblocking_grandchildren(child_blocking, grandchild_blocking,
                                                                      crawls_expected, downstream_crawls_expected,
                                                                      tree, provider_mock, protocol_mock, cs_mock,
-                                                                     set_max_depth, mocker, event_loop):
+                                                                     cli_args_mock, mocker, event_loop):
     """When --skip-nonblocking-grandchildren is specified, include nonblocking children of the seed, but nowhere else"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, skip_nonblocking_grandchildren=True)
+    cli_args_mock.skip_nonblocking_grandchildren = True
     child_nt = node.NodeTransport('dummy_protocol_mux', 'dummy_address')
     grandchild_nt = node.NodeTransport('dummy_protocol_mux_gc', 'dummy_address_gc')
     provider_mock.lookup_name.side_effect = ['seed_name', 'child_name', 'grandchild_name']
@@ -520,10 +512,10 @@ async def test_crawl_case_respect_cli_skip_nonblocking_grandchildren(child_block
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cli_max_depth(tree, node_fixture, provider_mock, cs_mock, mocker):
+async def test_crawl_case_respect_cli_max_depth(tree, node_fixture, provider_mock, cs_mock, cli_args_mock):
     """We should not crawl_downstream if max-depth is exceeded"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=0)
+    cli_args_mock.max_depth=0
     provider_mock.lookup_name.return_value = 'dummy_name'
 
     # act
@@ -535,7 +527,7 @@ async def test_crawl_case_respect_cli_max_depth(tree, node_fixture, provider_moc
 
 # respect charlotte / charlotte_web configurations
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cs_filter_service_name(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_respect_cs_filter_service_name(tree, provider_mock, cs_mock):
     """We respect when a service name is configured to be skipped by a specific crawl strategy"""
     # arrange
     cs_mock.filter_service_name.return_value = True
@@ -550,7 +542,7 @@ async def test_crawl_case_respect_cs_filter_service_name(tree, provider_mock, cs
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_respect_cs_service_name_rewrite(tree, provider_mock, cs_mock, set_max_depth):
+async def test_crawl_case_respect_cs_service_name_rewrite(tree, provider_mock, cs_mock):
     """Validate service_name_rewrites are called and used"""
     # arrange
     service_name = 'foo_name'
@@ -568,7 +560,7 @@ async def test_crawl_case_respect_cs_service_name_rewrite(tree, provider_mock, c
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_respect_charlotte_web_skip(tree, provider_mock, cs_mock, set_max_depth, mocker):
+async def test_crawl_case_respect_charlotte_web_skip(tree, provider_mock, cs_mock, mocker):
     """Skip service name is respected for charlotte_web"""
     # arrange
     service_name = 'foo_name'

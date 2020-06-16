@@ -13,8 +13,8 @@ def tree_named(tree):
 
 
 @pytest.fixture(autouse=True)
-def cli_args(args_mock):
-    args_mock.render_graphviz_rankdir = 'TB'
+def set_default_rankdir(cli_args_mock):
+    cli_args_mock.render_graphviz_rankdir = 'TB'
 
 
 def test_render_tree_case_respect_cli_rankdir(tree_named, capsys):
@@ -186,10 +186,10 @@ def test_render_tree_case_edge_child_nonblocking(tree_named, node_fixture, capsy
            f'color="" style=",dashed"]' in captured.out
 
 
-def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, args_mock, capsys):
+def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, cli_args_mock, capsys):
     """Defunct child hidden per ARGS"""
     # arrange
-    args_mock.hide_defunct = True
+    cli_args_mock.hide_defunct = True
     child_node = replace(node_fixture, service_name='child_service', warnings={'DEFUNCT': True})
     list(tree.values())[0].children = {'child_service_ref': child_node}
 
@@ -202,10 +202,10 @@ def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, args_moc
     assert f" -> {child_node.service_name}" not in captured.out
 
 
-def test_render_tree_case_edge_child_defunct_shown(tree_named, node_fixture, args_mock, capsys):
+def test_render_tree_case_edge_child_defunct_shown(tree_named, node_fixture, cli_args_mock, capsys):
     """Defunct child shown correctly - also validates `warnings` are shown correctly"""
     # arrange
-    args_mock.hide_defunct = False
+    cli_args_mock.hide_defunct = False
     child_node = replace(node_fixture, service_name='child_service', warnings={'DEFUNCT': True})
     tree = tree_named
     list(tree.values())[0].children = {'child_service_ref': child_node}

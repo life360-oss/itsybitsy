@@ -22,10 +22,10 @@ class TestNode:
         # act/assert
         assert not node_fixture.is_crawlable(0)
 
-    def test_is_crawlable_case_skip_nonblocking_grandchildren(self, node_fixture, mocker):
+    def test_is_crawlable_case_skip_nonblocking_grandchildren(self, cli_args_mock, node_fixture, mocker):
         """nonblocking grandchild not crawlable if --skip-nonblocking-grandchildren is specified"""
         # arrange
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000, skip_nonblocking_grandchildren=True)
+        cli_args_mock.skip_nonblocking_grandchildren = True
         node_fixture.service_name = 'dummy'
         mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=False)
         node_fixture.protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', autospec=True, blocking=False)
@@ -33,10 +33,10 @@ class TestNode:
         # act/assert
         assert not node_fixture.is_crawlable(2)
 
-    def test_is_crawlable_case_happy_path(self, node_fixture, mocker):
+    def test_is_crawlable_case_happy_path(self, cli_args_mock, node_fixture, mocker):
         """nonblocking grandchild not crawlable if --skip-nonblocking-grandchildren is specified"""
         # arrange
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000, skip_nonblocking_grandchildren=False)
+        cli_args_mock.skip_nonblocking_grandchildren = False
         node_fixture.service_name = 'dummy'
         mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=False)
 
@@ -44,19 +44,20 @@ class TestNode:
         assert node_fixture.is_crawlable(0)
 
     # is_excluded()
-    def test_is_excluded_case_disabled_provider(self, node_fixture, mocker):
+    def test_is_excluded_case_disabled_provider(self, cli_args_mock, node_fixture):
         # arrange
         disabled_provider = 'disabled_provider'
-        mocker.patch('itsybitsy.constants.ARGS', max_depth=1000, disable_providers=[disabled_provider])
+        cli_args_mock.disable_providers = [disabled_provider]
         node_fixture.provider = disabled_provider
 
         # act/assert
         assert node_fixture.is_excluded(0)
 
     @pytest.mark.parametrize('depth,expected_excluded', [(0, False), (1, False), (2, True)])
-    def test_is_excluded_case_skip_nonblocking_grandchildren(self, depth, expected_excluded, node_fixture, mocker):
+    def test_is_excluded_case_skip_nonblocking_grandchildren(self, cli_args_mock, depth, expected_excluded,
+                                                             node_fixture, mocker):
         # arrange
-        mocker.patch('itsybitsy.constants.ARGS', max_depth=1000, skip_nonblocking_grandchildren=True)
+        cli_args_mock.skip_nonblocking_grandchildren = True
         node_fixture.protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', autospec=True, blocking=False)
 
         # act/assert
@@ -102,20 +103,20 @@ class TestNode:
         assert node_fixture.is_database()
 
     # crawl_complete()
-    def test_crawl_complete_case_name_lookup_incomplete(self, node_fixture, mocker):
+    def test_crawl_complete_case_name_lookup_incomplete(self, cli_args_mock, node_fixture, mocker):
         """Crawl is not complete if name lookup is incomplete"""
         # arrange
-        mocker.patch('itsybitsy.node.constants.ARGS', skip_nonblocking_grandchildren=False)
+        cli_args_mock.skip_nonblocking_grandchildren = False
         node_fixture.name_lookup_complete = mocker.Mock(return_value=False)
 
         # act/assert
         assert not node_fixture.crawl_complete(depth=0)
 
-    def test_crawl_complete_case_max_depth_reached(self, node_fixture, mocker):
+    def test_crawl_complete_case_max_depth_reached(self, cli_args_mock, node_fixture, mocker):
         """Crawl is complete when max_depth is reached"""
         # arrange
         node_fixture.name_lookup_complete = mocker.Mock(return_value=True)
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=42)
+        cli_args_mock.max_depth = 42
 
         # act/assert
         assert node_fixture.crawl_complete(depth=42)
@@ -126,29 +127,26 @@ class TestNode:
         node_fixture.name_lookup_complete = mocker.Mock(return_value=True)
         node_fixture.service_name = 'stub'
         skip = mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=True)
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000)
 
         # act/assert
         assert node_fixture.crawl_complete(0)
         skip.assert_called_with('stub')
 
-    def test_crawl_complete_case_skip_nonblocking_grandchildren(self, node_fixture, mocker):
+    def test_crawl_complete_case_skip_nonblocking_grandchildren(self, cli_args_mock, node_fixture, mocker):
         """Crawl is complete if the service is nonblocking and a grandchild, if respective CLI arg specified"""
         # arrange
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000, skip_nonblocking_grandchildren=True)
+        cli_args_mock.skip_nonblocking_grandchildren = True
         node_fixture.name_lookup_complete = mocker.Mock(return_value=False)
         node_fixture.protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', autospec=True, blocking=False)
 
         # act/assert
         assert node_fixture.crawl_complete(2)
 
-
     @pytest.mark.parametrize('children,expected', [(None, False), ({}, True), ({'DUMMY': 'DUMMY'}, True)])
     def test_crawl_complete_case_children(self, children, expected, node_fixture, mocker):
         """Crawl is complete when children dict is present.  Here `None` has a different meaning than `{}`"""
         # arrange
         node_fixture.name_lookup_complete = mocker.Mock(return_value=True)
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000)
         node_fixture.children = children
 
         # act/assert
@@ -159,7 +157,6 @@ class TestNode:
         """Crawl is complete if errors have been encountered"""
         # arrange
         node_fixture.name_lookup_complete = mocker.Mock(return_value=True)
-        mocker.patch('itsybitsy.node.constants.ARGS', max_depth=1000)
         node_fixture.errors = errors
 
         # act/assert

@@ -8,9 +8,11 @@ from itsybitsy.charlotte_web import Protocol
 from itsybitsy.node import Node
 
 
-@pytest.fixture
-def args_mock(mocker):
-    return mocker.patch('itsybitsy.constants.ARGS', autospec=True)
+@pytest.fixture(autouse=True)
+def cli_args_mock(mocker):
+    args = mocker.patch('itsybitsy.constants.ARGS', autospec=True)
+    args.max_depth = 100
+    return args
 
 
 @pytest.fixture
@@ -50,10 +52,10 @@ def node_fixture(node_fixture_factory) -> Node:
 
 
 @pytest.fixture
-def tree(node_fixture, args_mock) -> Dict[str, Node]:
+def tree(node_fixture, cli_args_mock) -> Dict[str, Node]:
     seed_noderef = 'dummy'
     tree = {seed_noderef: node_fixture}
-    args_mock.seeds = [seed_noderef]
+    cli_args_mock.seeds = [seed_noderef]
 
     return tree
 

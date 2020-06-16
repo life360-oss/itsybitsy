@@ -4,8 +4,8 @@ from itsybitsy import providers
 
 
 @pytest.fixture(autouse=True)
-def disable_builtin_providers(mocker, builtin_providers):
-    mocker.patch('itsybitsy.constants.ARGS', disable_providers=builtin_providers)
+def disable_builtin_providers(builtin_providers, cli_args_mock):
+    cli_args_mock.disable_providers=builtin_providers
 
 
 @pytest.fixture(autouse=True)
@@ -48,9 +48,9 @@ class TestProviderInterface:
         assert [] == await provider_interface.crawl_downstream('dummy', None)
 
 
-def test_init_case_builtin_providers_disableable(builtin_providers, mocker):
+def test_init_case_builtin_providers_disableable(cli_args_mock, builtin_providers, mocker):
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', disable_providers=builtin_providers)
+    cli_args_mock.disable_providers = builtin_providers
 
     # act/assert
     providers.init()
@@ -60,7 +60,7 @@ def test_init_case_builtin_providers_disableable(builtin_providers, mocker):
         assert 1 == e_info.value.code
 
 
-def test_init_case_provider_subclass_registered(mocker):
+def test_init_case_provider_subclass_registered():
     """ProviderInterface subclasses are automatically registered up and configured"""
     # arrange
     class ProviderTestSubclassRegistered(providers.ProviderInterface):
@@ -76,7 +76,6 @@ def test_init_case_provider_subclass_registered(mocker):
         def ref():
             return 'subclassregistered'
     provider = ProviderTestSubclassRegistered()
-    stub_seed = 'dummy'
 
     # act
     providers.init()
