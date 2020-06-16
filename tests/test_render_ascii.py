@@ -39,7 +39,7 @@ async def _helper_render_tree_with_timeout(tree: Dict[str, Node]) -> None:
 async def test_render_tree_case_seed(tree_stubbed, capsys, mocker):
     """Test a single seed node is printed correctly - no errors or edge cases"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed[list(tree_stubbed)[0]]
     seed.children = {}
 
@@ -55,7 +55,7 @@ async def test_render_tree_case_seed(tree_stubbed, capsys, mocker):
 async def test_render_tree_case_child(tree_stubbed_with_child, capsys, mocker):
     """Test a single child node is printed correctly - no errors or edge cases"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
 
@@ -75,7 +75,7 @@ async def test_render_tree_case_child(tree_stubbed_with_child, capsys, mocker):
 async def test_render_tree_case_crawl_not_complete(tree_stubbed, capsys, mocker):
     """Render should not happen for a node unless `crawl_complete()` returns True"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed[list(tree_stubbed)[0]]
     mocker.patch.object(seed, 'crawl_complete', return_value=False)
 
@@ -90,7 +90,7 @@ async def test_render_tree_case_crawl_not_complete(tree_stubbed, capsys, mocker)
 async def test_render_tree_case_children_namelookup_incomplete(tree_stubbed_with_child, capsys, mocker):
     """Render should not happen for any children until all children names have been looked up"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     another_child = replace(child, service_name='another_child')
@@ -114,7 +114,7 @@ async def test_render_tree_case_children_namelookup_incomplete(tree_stubbed_with
 async def test_render_tree_case_child_errors(error, tree_stubbed_with_child, capsys, mocker):
     """A node with errors and no service name is displayed correctly"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
 
@@ -134,7 +134,7 @@ async def test_render_tree_case_child_errors(error, tree_stubbed_with_child, cap
 async def test_render_tree_case_child_warning_cycle(tree_stubbed_with_child, capsys, mocker):
     """A node with a CYCLE warning is displayed correctly"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     child.warnings = {'CYCLE': True}
@@ -151,7 +151,7 @@ async def test_render_tree_case_child_warning_cycle(tree_stubbed_with_child, cap
 async def test_render_tree_case_child_warning_defunct(tree_stubbed_with_child, capsys, mocker):
     """A node with a DEFUNCT warning is displayed correctly"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False, hide_defunct=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False, hide_defunct=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     child.warnings = {'DEFUNCT': True}
@@ -168,7 +168,7 @@ async def test_render_tree_case_child_warning_defunct(tree_stubbed_with_child, c
 async def test_render_tree_case_hide_defunct(tree_stubbed_with_child, capsys, mocker):
     """A node with a DEFUNCT warning is displayed correctly"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False, hide_defunct=True)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False, hide_defunct=True)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     child.warnings = {'DEFUNCT': True}
@@ -182,10 +182,10 @@ async def test_render_tree_case_hide_defunct(tree_stubbed_with_child, capsys, mo
 
 
 @pytest.mark.asyncio
-async def test_render_tree_case_max_depth_respected(tree_stubbed_with_child, capsys, mocker):
+async def test_render_tree_case_respect_cli_max_depth(tree_stubbed_with_child, capsys, mocker):
     """--max-depth arg is respected"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=0, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=0, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     child.service_name = 'DEPTH_1'
@@ -202,7 +202,7 @@ async def test_render_tree_case_max_depth_respected(tree_stubbed_with_child, cap
 async def test_render_tree_case_last_child(tree_stubbed_with_child, node_fixture, capsys, mocker):
     """A single node with multiple children, the last child printed is slightly different"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     last_child = replace(node_fixture, service_name='last_child_service', address='last_child_address', children={})
@@ -221,7 +221,7 @@ async def test_render_tree_case_last_child(tree_stubbed_with_child, node_fixture
 async def test_render_tree_case_merged_nodes(tree_stubbed_with_child, capsys, mocker):
     """A single node with multiple children, the last child printed is slightly different"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, verbose_ascii=False)
+    mocker.patch('itsybitsy.constants.ARGS', max_depth=100, debug=False, render_ascii_verbose=False)
     seed = tree_stubbed_with_child[list(tree_stubbed_with_child)[0]]
     child = seed.children[list(seed.children)[0]]
     redundant_child = replace(child, protocol_mux='some_other_mux')
