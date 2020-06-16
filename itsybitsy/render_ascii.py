@@ -76,7 +76,7 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
 
                 # render
                 _render_node(node, depth, print_prefix, is_last_sibling, out)
-                if constants.ARGS.verbose_ascii:
+                if constants.ARGS.render_ascii_verbose:
                     _render_node_errs_warns(node, error_print_prefix, out)
 
                 nodes_to_render.pop(node_ref)
@@ -146,12 +146,12 @@ def _render_node(node: Node, depth: int, prefix: str, is_last_sibling: bool, out
 
     # concise warning display
     concise_warnings = ''
-    if not constants.ARGS.verbose_ascii and node.warnings:
+    if not constants.ARGS.render_ascii_verbose and node.warnings:
         concise_warnings = colored('{WARN:' + '|'.join(node.warnings) + '} ', 'yellow')
 
     # concise error display
     concise_errors = ''
-    if not constants.ARGS.verbose_ascii and node.errors:
+    if not constants.ARGS.render_ascii_verbose and node.errors:
         concise_errors = colored('{ERR:' + '|'.join(node.errors) + '} ', 'red')
 
     # newline for SEED nodes

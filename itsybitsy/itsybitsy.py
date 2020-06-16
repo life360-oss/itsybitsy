@@ -98,13 +98,16 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
         sub_p.add_argument('-o', '--output', action='append', choices=render_choices,
                            help='Format in which to output the final graph.  Available options: '
                                 f"[{','.join(render_choices)}]")
-        sub_p.add_argument('-v', '--verbose-ascii', action='store_true', help='Verbose mode for ascii renderer')
+        sub_p.add_argument('--render-ascii-verbose', action='store_true', help='Verbose mode for ascii renderer')
+        sub_p.add_argument('--render-graphviz-rankdir', choices=['LR', 'TB'], default='LR',
+                           help='Layout director, or "rankdir" for graphviz diagram.  LR = "Left-to-Right", '
+                                'TB="Top-to-Bottom"')
         sub_p.add_argument('--debug', action='store_true', help='Log debug output to stderr')
 
     # crawl command args
     spider_p.add_argument('-s', '--seeds', required=True, nargs='+', metavar='SEED',
                           help='Seed host(s) to begin crawling viz. an IP address or hostname.  Must be in the format: '
-                              '"provider:address".  e.g. "ssh:10.0.0.42" or "k8s:widget-machine-5b5bc8f67f-2qmkp')
+                               '"provider:address".  e.g. "ssh:10.0.0.42" or "k8s:widget-machine-5b5bc8f67f-2qmkp')
     spider_p.add_argument('-c', '--config-file', is_config_file=True, metavar='FILE', help='Specify a config file path')
     spider_p.add_argument('-X', '--disable-providers', nargs='+', default=[], metavar='PROVIDER',
                           help="Do not initialize or crawl with these providers")

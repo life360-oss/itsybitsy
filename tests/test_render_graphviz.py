@@ -1,7 +1,7 @@
 import pytest
 from dataclasses import replace
 
-from itsybitsy import render_graphviz
+from itsybitsy import constants, render_graphviz
 
 
 @pytest.fixture
@@ -10,6 +10,22 @@ def tree_named(tree):
     list(tree.values())[0].service_name = 'dummy'
 
     return tree
+
+
+@pytest.fixture(autouse=True)
+def cli_args(args_mock):
+    args_mock.render_graphviz_rankdir = 'TB'
+
+
+def test_render_tree_case_respect_cli_rankdir(tree_named, capsys):
+    """single node - rankdir cli arg is respected"""
+    # arrange/act
+    render_graphviz.render_tree(tree_named, True)
+    captured = capsys.readouterr()
+    print(captured)
+
+    # assert
+    assert f"{tree_named[list(tree_named)[0]].service_name} [style=bold]" in captured.out
 
 
 def test_render_tree_case_node_has_service_name(tree_named, capsys):
@@ -170,10 +186,10 @@ def test_render_tree_case_edge_child_nonblocking(tree_named, node_fixture, capsy
            f'color="" style=",dashed"]' in captured.out
 
 
-def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, mocker, capsys):
+def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, args_mock, capsys):
     """Defunct child hidden per ARGS"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', hide_defunct=True)
+    args_mock.hide_defunct = True
     child_node = replace(node_fixture, service_name='child_service', warnings={'DEFUNCT': True})
     list(tree.values())[0].children = {'child_service_ref': child_node}
 
@@ -186,10 +202,10 @@ def test_render_tree_case_edge_child_defunct_hidden(tree, node_fixture, mocker, 
     assert f" -> {child_node.service_name}" not in captured.out
 
 
-def test_render_tree_case_edge_child_defunct_shown(tree_named, node_fixture, mocker, capsys):
+def test_render_tree_case_edge_child_defunct_shown(tree_named, node_fixture, args_mock, capsys):
     """Defunct child shown correctly - also validates `warnings` are shown correctly"""
     # arrange
-    mocker.patch('itsybitsy.constants.ARGS', hide_defunct=False)
+    args_mock.hide_defunct = False
     child_node = replace(node_fixture, service_name='child_service', warnings={'DEFUNCT': True})
     tree = tree_named
     list(tree.values())[0].children = {'child_service_ref': child_node}

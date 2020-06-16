@@ -24,6 +24,7 @@ def render_tree(tree: Dict[str, Node], source: bool = False) -> None:
     dot = Digraph()
     dot.node_attr['shape'] = 'box'
     dot.graph_attr['dpi'] = '300'
+    dot.graph_attr['rankdir'] = constants.ARGS.render_graphviz_rankdir
     for node_ref, node in tree.items():
         _compile_digraph(node_ref, node)
     if source:
