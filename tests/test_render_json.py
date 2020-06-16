@@ -12,7 +12,7 @@ from itsybitsy import render_json
 
 
 @pytest.fixture
-def global_args():
+def cli_args_fixture():
     # we are not using mocker to patch globals.ARGS because json.dump can't serialize a mock
     constants.ARGS = SimpleNamespace()
     constants.ARGS.max_depth = 100
@@ -51,9 +51,9 @@ def test_load_case_args_primitives(tmp_path, mocker):
     assert constants.ARGS.skip_nonblocking_grandchildren
 
 
-def test_load_case_objects(global_args, tmp_path):
+def test_load_case_objects(cli_args_fixture, tmp_path):
     """Custom objects can be loaded from a json file. Apologies for the ungodly size of this unit test"""
-    # global_args fixture is called but not used simply in order to mock it in render_json.dump()
+    # cli_args_fixture fixture is called but not used simply in order to mock it in render_json.dump()
     tmp_file = os.path.join(tmp_path, 'stub-load.json')
     # - protocol
     proto_ref, proto_name, proto_blocking, proto_is_database = ('foo', 'bar', True, False)
@@ -164,7 +164,7 @@ def test_dump_case_args(tmp_path):
     assert loaded.get('tree') == tree
 
 
-def test_dump_case_primitives(tmp_path, global_args):
+def test_dump_case_primitives(tmp_path, cli_args_fixture):
     """Primitive data types are dumped to disk"""
     # arrange
     tree = {
@@ -182,9 +182,9 @@ def test_dump_case_primitives(tmp_path, global_args):
     assert loaded.get('tree') == tree
 
 
-def test_dump_case_objects(global_args, tmp_json_dumpfile, node_fixture, crawl_strategy_fixture, protocol_fixture):
+def test_dump_case_objects(cli_args_fixture, tmp_json_dumpfile, node_fixture, crawl_strategy_fixture, protocol_fixture):
     """Custom objects are json dumped to disk. Apologies for the large size of this unit test"""
-    # global_args fixture is called but not used simply in order to mock it in render_json.dump()
+    # cli_args_fixture fixture is called but not used simply in order to mock it in render_json.dump()
     # arrange
     # - protocol
     proto_ref, proto_name, proto_blocking, proto_is_database = ('foo', 'bar', True, False)
