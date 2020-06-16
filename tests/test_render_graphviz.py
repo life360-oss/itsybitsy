@@ -14,18 +14,38 @@ def tree_named(tree):
 
 @pytest.fixture(autouse=True)
 def set_default_rankdir(cli_args_mock):
-    cli_args_mock.render_graphviz_rankdir = 'TB'
+    cli_args_mock.render_graphviz_rankdir = constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT
 
 
-def test_render_tree_case_respect_cli_rankdir(tree_named, capsys):
-    """single node - rankdir cli arg is respected"""
-    # arrange/act
+@pytest.mark.parametrize('rankdir', [constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT,
+                                     constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM])
+def test_render_tree_case_respect_cli_rankdir_options(cli_args_mock, rankdir, tree_named, capsys):
+    # arrange
+    cli_args_mock.render_graphviz_rankdir = rankdir
+
+    # act
     render_graphviz.render_tree(tree_named, True)
     captured = capsys.readouterr()
-    print(captured)
 
     # assert
-    assert f"{tree_named[list(tree_named)[0]].service_name} [style=bold]" in captured.out
+    assert f"graph [dpi=300 rankdir={rankdir}]" in captured.out
+
+
+@pytest.mark.parametrize('skip_nonblocking_grandchildren,expected_rankdir',
+                         [(False, constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM),
+                          (True, constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT)])
+def test_render_tree_case_respect_cli_rankdir_auto(skip_nonblocking_grandchildren, expected_rankdir, cli_args_mock,
+                                                   tree_named, capsys):
+    # arrange
+    cli_args_mock.render_graphviz_rankdir = constants.GRAPHVIZ_RANKDIR_AUTO
+    cli_args_mock.skip_nonblocking_grandchildren = skip_nonblocking_grandchildren
+
+    # act
+    render_graphviz.render_tree(tree_named, True)
+    captured = capsys.readouterr()
+
+    # assert
+    assert f"graph [dpi=300 rankdir={expected_rankdir}]" in captured.out
 
 
 def test_render_tree_case_node_has_service_name(tree_named, capsys):

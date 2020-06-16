@@ -21,12 +21,13 @@ def render_tree(tree: Dict[str, Node], source: bool = False) -> None:
     dot = Digraph()
     dot.node_attr['shape'] = 'box'
     dot.graph_attr['dpi'] = '300'
-    dot.graph_attr['rankdir'] = constants.ARGS.render_graphviz_rankdir
+    dot.graph_attr['rankdir'] = _determine_rankdir()
     for node_ref, node in tree.items():
         _compile_digraph(node_ref, node)
     if source:
         print(dot.source)
     else:
+        dot.subgraph()
         seed_names = ','.join([node.service_name for node in tree.values() if node.service_name is not None])
         seeds = seed_names or ','.join(constants.ARGS.seeds).replace('.', '-')
         dot.render(f"itsy-prettsy_{seeds}", directory=constants.OUTPUTS_DIR, view=True, format='png', cleanup=True)
@@ -35,6 +36,20 @@ def render_tree(tree: Dict[str, Node], source: bool = False) -> None:
     global nodes_compiled, edges_compiled
     nodes_compiled = {}
     edges_compiled = []
+
+
+def _determine_rankdir() -> str:
+    if constants.GRAPHVIZ_RANKDIR_AUTO != constants.ARGS.render_graphviz_rankdir:
+        return constants.ARGS.render_graphviz_rankdir
+
+    return _determine_auto_rankdir()
+
+
+def _determine_auto_rankdir() -> str:
+    if constants.ARGS.skip_nonblocking_grandchildren:
+        return constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT
+
+    return constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM
 
 
 def _compile_digraph(node_ref: str, node: Node, blocking_from_top: bool = True) -> None:

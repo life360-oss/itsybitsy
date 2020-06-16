@@ -53,10 +53,7 @@ def dump(tree: Dict[str, Node], file: str = None) -> None:
     :param file:
     :return:
     """
-    tree_with_args = {
-        'args': vars(constants.ARGS),
-        'tree': tree
-    }
+    tree_with_args = _add_cli_args_to_json_tree(tree)
     with open(file, 'w+') as file_handle:
         json.dump(tree_with_args, file_handle, cls=_EnhancedJSONEncoder)
 
@@ -67,4 +64,12 @@ def dumps(tree: Dict[str, Node]) -> None:
     :param tree:
     :return:
     """
-    print(json.dumps(tree, cls=_EnhancedJSONEncoder))
+    tree_with_args = _add_cli_args_to_json_tree(tree)
+    print(json.dumps(tree_with_args, cls=_EnhancedJSONEncoder))
+
+
+def _add_cli_args_to_json_tree(tree: Dict[str, Node]) -> dict:
+    return {
+        'args': vars(constants.ARGS),
+        'tree': tree
+    }

@@ -90,21 +90,26 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
     # add common opts to each sub parser
     for sub_p in subparsers.choices.values():
         # common args
-        sub_p.add_argument('-d', '--max-depth', type=int, default=100, metavar='DEPTH', help='Max tree depth to crawl')
         sub_p.add_argument('-D', '--hide-defunct', action='store_true', help='Hide defunct (unused) connections')
         sub_p.add_argument('-o', '--output', action='append', choices=render_choices,
                            help='Format in which to output the final graph.  Available options: '
                                 f"[{','.join(render_choices)}]")
         sub_p.add_argument('--render-ascii-verbose', action='store_true', help='Verbose mode for ascii renderer')
-        sub_p.add_argument('--render-graphviz-rankdir', choices=['LR', 'TB'], default='LR',
-                           help='Layout director, or "rankdir" for graphviz diagram.  LR = "Left-to-Right", '
-                                'TB="Top-to-Bottom"')
+        sub_p.add_argument('--render-graphviz-rankdir', choices=[constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT,
+                                                                 constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM,
+                                                                 constants.GRAPHVIZ_RANKDIR_AUTO],
+                           default=constants.GRAPHVIZ_RANKDIR_AUTO,
+                           help='Layout director, or "rankdir" for graphviz diagram.  '
+                                f"{constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT} = \"Left-to-Right\", "
+                                f"{constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM}=\"Top-to-Bottom\", "
+                                f"\"{constants.GRAPHVIZ_RANKDIR_AUTO}\" automatically renders for best orientation")
         sub_p.add_argument('--debug', action='store_true', help='Log debug output to stderr')
 
     # crawl command args
     spider_p.add_argument('-s', '--seeds', required=True, nargs='+', metavar='SEED',
                           help='Seed host(s) to begin crawling viz. an IP address or hostname.  Must be in the format: '
                                '"provider:address".  e.g. "ssh:10.0.0.42" or "k8s:widget-machine-5b5bc8f67f-2qmkp')
+    spider_p.add_argument('-d', '--max-depth', type=int, default=100, metavar='DEPTH', help='Max tree depth to crawl')
     spider_p.add_argument('-c', '--config-file', is_config_file=True, metavar='FILE', help='Specify a config file path')
     spider_p.add_argument('-X', '--disable-providers', nargs='+', default=[], metavar='PROVIDER',
                           help="Do not initialize or crawl with these providers")
@@ -158,17 +163,13 @@ async def crawl_water_spout():
 
 
 def render(tree: Dict[str, node.Node]) -> None:
-    # always dump sample_outputs/lastrun.json
-    render_json.dump(tree, constants.LASTRUN_FILE)
-
-    # --output
     if constants.ARGS.output:
         if 'pprint' in constants.ARGS.output:
             constants.PP.pprint(tree)
         if 'ascii' in constants.ARGS.output:
             asyncio.get_event_loop().run_until_complete(render_ascii.render_tree(tree, [], sys.stdout))
         if 'json' in constants.ARGS.output:
-            print(render_json.dumps(tree))
+            render_json.dumps(tree)
         if 'graphviz' in constants.ARGS.output:
             render_graphviz.render_tree(tree)
         if 'graphviz_source' in constants.ARGS.output:
@@ -203,12 +204,15 @@ def main():
         constants.ARGS = argparser.parse_args()
         if not constants.ARGS.output:
             constants.ARGS.output = ['ascii']
-        render(render_json.load(constants.ARGS.json_file or constants.LASTRUN_FILE))
+        tree = render_json.load(constants.ARGS.json_file or constants.LASTRUN_FILE)
+        render(tree)
     elif command_spider == constants.ARGS.command:
         providers.parse_provider_args(spider_subparser)
         constants.ARGS = argparser.parse_args()
         providers.init()
-        render(asyncio.get_event_loop().run_until_complete(crawl_water_spout()))
+        tree = asyncio.get_event_loop().run_until_complete(crawl_water_spout())
+        render_json.dump(tree, constants.LASTRUN_FILE)
+        render(tree)
     else:
         # This code path should be unreachable since argparse will constrain which command can be executed
         print(colored(f"Invalid command: {constants.ARGS.command}.  Please file bug with maintainer.", 'red'))
