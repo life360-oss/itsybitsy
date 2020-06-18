@@ -162,6 +162,11 @@ async def crawl_water_spout():
     return tree
 
 
+def _create_outputs_directory_if_absent():
+    if not os.path.exists(constants.OUTPUTS_DIR):
+        os.makedirs(constants.OUTPUTS_DIR)
+
+
 def render(tree: Dict[str, node.Node]) -> None:
     if constants.ARGS.output:
         if 'pprint' in constants.ARGS.output:
@@ -200,6 +205,7 @@ def main():
     print(f"Hello, {os.getlogin()}", file=sys.stderr)
 
     # render OR spider
+    _create_outputs_directory_if_absent()
     if command_render == constants.ARGS.command:
         constants.ARGS = argparser.parse_args()
         if not constants.ARGS.output:
