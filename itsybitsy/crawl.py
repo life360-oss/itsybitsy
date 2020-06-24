@@ -12,7 +12,7 @@ from dataclasses import replace
 from termcolor import colored
 from typing import Dict, List, Optional, Tuple
 
-from . import charlotte, charlotte_web, constants, logs, providers
+from . import charlotte, charlotte_web, constants, logs, obfuscate, providers
 from .charlotte import CrawlStrategy
 from .node import Node, NodeTransport
 
@@ -62,11 +62,11 @@ async def _assign_names_and_detect_cycles(tree: Dict[str, Node], service_names: 
             tree[node_ref].errors['NAME_LOOKUP_FAILED'] = True
             continue
         service_name = tree[node_ref].crawl_strategy.rewrite_service_name(service_name, tree[node_ref])
+        if constants.ARGS.obfuscate:
+            service_name = obfuscate.obfuscate_service_name(service_name)
         if service_name in ancestors:
             tree[node_ref].warnings['CYCLE'] = True
-        # allow hints to have set service name, only override if a new and different name is looked up
-        if service_name != tree[node_ref].service_name:
-            tree[node_ref].service_name = service_name
+        tree[node_ref].service_name = service_name
 
 
 def _get_crawl_result_with_exception_handling(future: asyncio.Future) -> (str, Dict[str, Node]):
@@ -244,12 +244,10 @@ def _skip_protocol_mux(mux: str):
 
 
 def _create_node(cs_used: CrawlStrategy, node_transport: NodeTransport) -> (str, Node):
-    node_ref = '_'.join(x for x in [cs_used.protocol.ref, node_transport.protocol_mux, node_transport.debug_identifier]
-                        if x is not None)
-
-    # create a node
     provider = cs_used.determine_child_provider(node_transport.protocol_mux, node_transport.address)
     from_hint = constants.PROVIDER_HINT in cs_used.providers
+    if constants.ARGS.obfuscate:
+        node_transport = obfuscate.obfuscate_node_transport(node_transport)
     node = Node(
         crawl_strategy=cs_used,
         protocol=cs_used.protocol,
@@ -267,4 +265,6 @@ def _create_node(cs_used: CrawlStrategy, node_transport: NodeTransport) -> (str,
     if 0 == node_transport.num_connections:
         node.warnings['DEFUNCT'] = True
 
+    node_ref = '_'.join(x for x in [cs_used.protocol.ref, node_transport.protocol_mux, node_transport.debug_identifier]
+                        if x is not None)
     return node_ref, node

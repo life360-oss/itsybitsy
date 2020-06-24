@@ -27,6 +27,8 @@ setup(
         'asyncssh~=2.2.0',
         'boto3~=1.12.32',
         'configargparse~=1.2.3',
+        'coolname~=1.1.0',
+        'faker~=4.1.1',
         'kubernetes~=11.0.0',
         'paramiko~=2.7.1',
         'pyyaml~=5.3.1',

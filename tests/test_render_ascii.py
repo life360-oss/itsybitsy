@@ -53,7 +53,7 @@ async def test_render_tree_case_seed(tree_stubbed, capsys):
     captured = capsys.readouterr()
 
     # assert
-    assert f"\n{seed.service_name} [{seed.protocol_mux}] ({seed.address})\n" == captured.out
+    assert f"\n{seed.service_name} [{seed.protocol_mux}]\n" == captured.out
 
 
 @pytest.mark.asyncio
@@ -69,8 +69,8 @@ async def test_render_tree_case_child(tree_stubbed_with_child, capsys):
 
     # assert
     expected = ("\n"
-                f"{seed.service_name} [{seed.protocol_mux}] ({seed.address})\n"
-                f" └--{child.protocol.ref}--> {child.service_name} [port:{child.protocol_mux}] ({child.address})\n")
+                f"{seed.service_name} [{seed.protocol_mux}]\n"
+                f" └--{child.protocol.ref}--> {child.service_name} [port:{child.protocol_mux}]\n")
     assert expected == captured.out
 
 
