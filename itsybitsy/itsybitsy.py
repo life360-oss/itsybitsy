@@ -103,6 +103,8 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
                                 f"{constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT} = \"Left-to-Right\", "
                                 f"{constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM}=\"Top-to-Bottom\", "
                                 f"\"{constants.GRAPHVIZ_RANKDIR_AUTO}\" automatically renders for best orientation")
+        sub_p.add_argument('--obfuscate', action='store_true', help="Obfuscate graph details.  Useful for sharing "
+                                                                    "rendered output outside of trusted organizations.")
         sub_p.add_argument('--debug', action='store_true', help='Log debug output to stderr')
 
     # crawl command args

@@ -159,8 +159,8 @@ def _render_node(node: Node, depth: int, prefix: str, is_last_sibling: bool, out
     protocol_mux = f"port:{node.protocol_mux}" if node.protocol.blocking and depth > 0 else node.protocol_mux
 
     # print node
-    print(f"{prefix}{branch}{concise_warnings}{concise_errors}{service_name} [{protocol_mux}] ({node.address})",
-          file=out)
+    address = f" ({node.address})" if constants.ARGS.render_ascii_verbose else ''
+    print(f"{prefix}{branch}{concise_warnings}{concise_errors}{service_name} [{protocol_mux}]{address}", file=out)
 
 
 def _render_node_errs_warns(node: Node, error_prefix: str, out):

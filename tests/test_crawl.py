@@ -66,6 +66,11 @@ def hint_mock(protocol_fixture, mocker) -> MagicMock:
     return hint_mock
 
 
+@pytest.fixture(autouse=True)
+def set_default_cli_args(cli_args_mock):
+    cli_args_mock.obfuscate = False
+
+
 # helpers
 async def _wait_for_all_tasks_to_complete(event_loop):
     """Wait for all tasks to complete in the event loop. Assumes that 1 task will remain incomplete - and that
@@ -515,7 +520,7 @@ async def test_crawl_case_respect_cli_skip_nonblocking_grandchildren(child_block
 async def test_crawl_case_respect_cli_max_depth(tree, node_fixture, provider_mock, cs_mock, cli_args_mock):
     """We should not crawl_downstream if max-depth is exceeded"""
     # arrange
-    cli_args_mock.max_depth=0
+    cli_args_mock.max_depth = 0
     provider_mock.lookup_name.return_value = 'dummy_name'
 
     # act
@@ -523,6 +528,30 @@ async def test_crawl_case_respect_cli_max_depth(tree, node_fixture, provider_moc
 
     # assert
     provider_mock.crawl_downstream.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_crawl_case_respect_cli_obfuscate(tree, node_fixture, cs_mock, provider_mock, cli_args_mock):
+    """We need to test a child for protocol mux obfuscation since the tree is already populated with a fully hydrated
+        Node - which is past the point of obfuscation"""
+    # arrange
+    cli_args_mock.obfuscate = True
+    seed_service_name = 'actual_service_name_foo'
+    child_protocol_mux = 'child_actual_protocol_mux'
+    child_nt = node.NodeTransport(child_protocol_mux)
+    provider_mock.lookup_name.return_value = seed_service_name
+    provider_mock.lookup_name.return_value = 'dummy_service_name'
+    provider_mock.crawl_downstream.side_effect = [[child_nt], []]
+    cs_mock.providers = [provider_mock.ref()]
+
+    # act
+    await crawl.crawl(tree, [])
+
+    # assert
+    seed: node.Node = list(tree.values())[0]
+    child: node.Node = seed.children[list(seed.children)[0]]
+    assert seed.service_name != seed_service_name
+    assert child.protocol_mux != child_protocol_mux
 
 
 # respect charlotte / charlotte_web configurations
