@@ -70,9 +70,6 @@ async def _assign_names_and_detect_cycles(tree: Dict[str, Node], service_names: 
 
 
 def _get_crawl_result_with_exception_handling(future: asyncio.Future) -> (str, Dict[str, Node]):
-    """Get result from future and handle exception w/ sys.exit(1).  TimeoutError will have printed more verbose
-    output in the context in which it was raised.   We use sys.exit to ensure the entire program is halted and not
-    simply each individual async task."""
     try:
         return future.result()
     except TimeoutError:
@@ -84,19 +81,9 @@ def _get_crawl_result_with_exception_handling(future: asyncio.Future) -> (str, D
 
 async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (list, Dict[str, Node]):
     """
-    Open connections for nodes to crawl - if they have not already been crawled as indicated by presence in cache
-    then a connection is not opened and `None` is substituted.
-
     We use sys.exit() to ensure the entire program is halted and not simply the individual task in which an exception
     was raised.
-
-    :param tree:
-    :param ancestors:
-    :return:
-        list - of mixed type connections
-        Dict[str, Node] - a copy of the passed in tree, with nodes having connection timeouts removed
     """
-
     # open optional provider connections
     conns = await asyncio.gather(
         *[asyncio.wait_for(
@@ -126,14 +113,6 @@ async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (lis
 
 
 async def _open_connection(address: str, provider: providers.ProviderInterface):
-    """
-    Open connection to node in provider, only if the node has not already been processed, as indicated by presence in
-    caches
-
-    :param address:
-    :param provider:
-    :return:
-    """
     if address in service_name_cache:
         if service_name_cache[address] is None:
             logs.logger.debug(f"Not opening connection: name is None ({address}")
@@ -150,18 +129,6 @@ async def _open_connection(address: str, provider: providers.ProviderInterface):
 
 
 async def _lookup_service_names(tree: Dict[str, Node], conns: list) -> (List[str], list):
-    """
-    Lookup service names in respective providers with read-through caching.
-
-    We use sys.exit() to ensure the entire program is halted and not simply the individual task in which an exception
-    was raised.
-
-    :param tree:
-    :param conns:
-    :return:
-        List[str] - of service names
-        list - pass through mixed type connections - with connections associated with failed lookups removed
-    """
     # lookup_name / detect cycles
     service_names = await asyncio.gather(
         *[asyncio.wait_for(
@@ -187,14 +154,6 @@ async def _lookup_service_names(tree: Dict[str, Node], conns: list) -> (List[str
 
 async def _lookup_service_name(address: str, provider: providers.ProviderInterface,
                                connection: type) -> Optional[str]:
-    """
-    Lookup service name in provider w/ read through caching
-
-    :param address:
-    :param provider:
-    :param connection:
-    :return:
-    """
     if address in service_name_cache:
         logs.logger.debug(f"Using cached service name ({service_name_cache[address]} for: {address}")
         return service_name_cache[address]
@@ -209,16 +168,6 @@ async def _lookup_service_name(address: str, provider: providers.ProviderInterfa
 
 async def _crawl_with_hints(provider_ref: str, node_ref: str, address: str, service_name: str,
                             connection: type) -> (str, Dict[str, Node]):
-    """
-    Crawl a node for children - and augment the return with user provided hints
-
-    :param provider_ref:
-    :param node_ref:
-    :param address:
-    :param service_name:
-    :param connection:
-    :return:
-    """
     if service_name in child_cache:
         logs.logger.debug(f"Found {len(child_cache[service_name])} children in cache for:{service_name}")
         # we must to this copy to avoid various contention and infinite recursion bugs
@@ -287,12 +236,6 @@ def _compile_crawl_tasks_and_crawl_strategies(address: str, service_name: str, p
 
 
 def _skip_protocol_mux(mux: str):
-    """
-    Whether to skip this protocol_mux (http port, nsq topic, etc)
-
-    :param mux:
-    :return:
-    """
     for skip in constants.ARGS.skip_protocol_muxes:
         if skip in mux:
             return True
