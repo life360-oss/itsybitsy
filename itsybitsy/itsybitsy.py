@@ -103,8 +103,8 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
                                 f"{constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT} = \"Left-to-Right\", "
                                 f"{constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM}=\"Top-to-Bottom\", "
                                 f"\"{constants.GRAPHVIZ_RANKDIR_AUTO}\" automatically renders for best orientation")
-        sub_p.add_argument('--obfuscate', action='store_true', help="Obfuscate graph details.  Useful for sharing "
-                                                                    "rendered output outside of trusted organizations.")
+        sub_p.add_argument('--render-graphviz-highlight-services', nargs='+', metavar='SERVICE',
+                           help='A list of services to highlight in graphviz.')
         sub_p.add_argument('--debug', action='store_true', help='Log debug output to stderr')
 
     # crawl command args
@@ -118,9 +118,14 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
     spider_p.add_argument('-P', '--skip-protocols', nargs='+', default=[], metavar='PROTOCOL',
                           help='A list of protocols to skip.  e.g. "NSQ PXY"')
     spider_p.add_argument('-M', '--skip-protocol-muxes', nargs='+', default=[], metavar='MUX',
-                          help='Skip crawling for children on services with these names (name lookup will still happen)')
+                          help='Skip crawling for children on services with these '
+                               'names (name lookup will still happen)')
     spider_p.add_argument('-G', '--skip-nonblocking-grandchildren', action='store_true',
-                          help='Skip crawling of nonblocking children unless they are direct children of the seed nodes')
+                          help='Skip crawling of nonblocking children unless they '
+                               'are direct children of the seed nodes')
+    spider_p.add_argument('-x', '--obfuscate', action='store_true',
+                          help="Obfuscate graph details.  Useful for sharing rendered output outside of "
+                               "trusted organizations.")
     spider_p.add_argument('-q', '--quiet', action='store_true',
                           help='Do not render graph output to stdout while crawling')
 

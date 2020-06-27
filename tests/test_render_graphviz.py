@@ -48,6 +48,26 @@ def test_render_tree_case_respect_cli_rankdir_auto(skip_nonblocking_grandchildre
     assert f"graph [dpi=300 rankdir={expected_rankdir}]" in captured.out
 
 
+@pytest.mark.parametrize('highlighted_service', ['child_service_name', 'parent_service_name'])
+def test_render_tree_case_respect_cli_highlight_services(highlighted_service, tree, node_fixture_factory, cli_args_mock,
+                                                         capsys):
+    """Validate blocking child shows regular nondashed, non bold line when it is not blocking from top"""
+    # arrange
+    cli_args_mock.render_graphviz_highlight_services = [highlighted_service]
+    child = replace(node_fixture_factory(), service_name='child_service_name')
+    parent = list(tree.values())[0]
+    parent.service_name = 'parent_service_name'
+    parent.children = {'bar_service_ref': child}
+
+    # act
+    render_graphviz.render_tree(tree, True)
+    captured = capsys.readouterr()
+    print(captured)
+
+    # assert
+    assert f"color=\"yellow:black:yellow\"" in captured.out
+
+
 def test_render_tree_case_node_has_service_name(tree_named, capsys):
     """single node - not from hint, with service name, no children, no errs/warns"""
     # arrange/act
