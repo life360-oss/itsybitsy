@@ -78,6 +78,9 @@ def _compile_digraph(node_ref: str, node: Node, blocking_from_top: bool = True) 
 
 
 def _compile_edge(parent_name: str, child: Node, child_name: str, child_blocking_from_top: bool) -> None:
+    parent_or_child_is_highlighted = constants.ARGS.render_graphviz_highlight_services and \
+                                     True in [name in [parent_name, child_name] for
+                                              name in constants.ARGS.render_graphviz_highlight_services]
     edge_str = f"{parent_name}.{child.protocol.ref}.{child_name}"
     if edge_str not in edges_compiled:
         defunct = child.warnings.get('DEFUNCT')
@@ -86,6 +89,7 @@ def _compile_edge(parent_name: str, child: Node, child_name: str, child_blocking
         edge_style += ',dotted,filled' if defunct else ''
         edge_color = 'red' if child.errors else 'darkorange' if defunct else ''
         edge_color += ':blue' if child.from_hint else ''
+        edge_color += 'yellow:black:yellow' if parent_or_child_is_highlighted else ''
         edge_weight = '3' if defunct or child.from_hint else None
         errs_warns = ','.join({**child.errors, **child.warnings, **({'HINT': True} if child.from_hint else {})})
         label = f"{child.protocol.ref}{' (' + errs_warns + ')' if errs_warns else ''}"
