@@ -140,5 +140,6 @@ cython_debug/
 # IDEs
 .idea
 
-# outputs
+# itsybitsy
 outputs/
+.lastrun.json

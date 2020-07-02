@@ -10,14 +10,11 @@ Configure charlotte, give it a seed node, and it crawls the graph/tree of your s
   * python >= 3.8 was chosen in order to use unittest.mock AsyncMock
 * dot/graphviz binaries installed in system PATH (e.g. `brew install graphviz`)
 
-
-## Configure itsybitsy in 8 easy steps!
-1. Clone itsybitsy
-    1. `git clone git@github.com/life360/itsybitsy`
+## Configure itsybitsy in 7 easy steps!
 1. Review the example project in [examples/example-project(examples/example-project)]
 1. Start a new project / empty folder
     1. `mkdir myitsybitsy && cd myitsybitsy`
-    1. `echo "-e /Users/patrick/repos/itsybitsy" > requirements.txt`
+    1. `echo "git+ssh://git@github.com/life360/itsybitsy.git#egg=itsybitsy" > requirements.txt`
     1. `pip install -r requirements.txt`
 1. Configure charlotte - the configuration engine with which you will describe your service graph to itsybitsy
     1. `mkdir charlotte.d`
@@ -30,7 +27,6 @@ Configure charlotte, give it a seed node, and it crawls the graph/tree of your s
 1. Set any configurations which are known to be required for every run in `spider.conf` see [./examples/spider.conf.example](./examples/spider.conf.example)
   1. Hint: `spider.conf` is always inherited, but you can create different profiles such as `spider.prod.conf` and reference them with the `--profile` arg
 1. Note: unlike the `spider` command, `render` is written to stand alone and parse the default json file in `outputs/.lastrun.json` it requires no arguments by default.
-
 
 ## Use
 #### 1 Run in `spider` mode:
