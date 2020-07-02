@@ -149,11 +149,14 @@ def init():
 
     :return:
     """
-    for provider_class in [cls for cls in ProviderInterface.__subclasses__()
-                           if cls.ref() not in constants.ARGS.disable_providers]:
+    for provider_class in _enabled_providers():
         if provider_class.ref() in provider_registry:
             raise ProviderClobberException(f"Provider {provider_class.ref()} already registered!")
         provider_registry[provider_class.ref()] = provider_class()
+
+
+def _enabled_providers() -> List[ProviderInterface]:
+    return [cls for cls in ProviderInterface.__subclasses__() if cls.ref() not in constants.ARGS.disable_providers]
 
 
 def get(provider_ref: str) -> ProviderInterface:

@@ -11,19 +11,30 @@ Configure charlotte, give it a seed node, and it crawls the graph/tree of your s
 * dot/graphviz binaries installed in system PATH (e.g. `brew install graphviz`)
 
 
-## Configure
-1. Configure Charlotte.  Charlotte is the configuration engine which allows specification of use defined crawl strategies.  Please see [charlotte.d/examples/ExampleSSHCrawlStrategy.yaml](charlotte.d/examples/ExampleSSHCrawlStrategy.yaml) for example/documentation.
-2. Configure Charlotte Web.   "Providers", "skips" (known services to skip crawling for whatever reason), and "Hints" (user defined links in the system) are all defined in [charlotte.d/web.yaml](charlotte.d/web.yaml)
-3. Run `itsybitsy --help` for all available commands and `itsybitsy spider --help` and `itsybitsy render --help` for command specific configuration.  Set any configurations which are known to be required for every run in a conf file such as [./examples/spider.conf.example](./examples/spider.conf.examle)
-    1. NOTE: unlike the `spider` command, `render` is written to stand alone and parse the default json file: it requires no arguments by default.
+## Configure itsybitsy in 8 easy steps!
+1. Clone itsybitsy
+    1. `git clone git@github.com/life360/itsybitsy`
+1. Review the example project in [examples/example-project(examples/example-project)]
+1. Start a new project / empty folder
+    1. `mkdir myitsybitsy && cd myitsybitsy`
+    1. `echo "-e /Users/patrick/repos/itsybitsy" > requirements.txt`
+    1. `pip install -r requirements.txt`
+1. Configure charlotte - the configuration engine with which you will describe your service graph to itsybitsy
+    1. `mkdir charlotte.d`
+    1. Create a/several `...CrawlStrategy.yaml` file(s).
+        1. Please see [examples/ExampleSSHCrawlStrategy.yaml](examples/ExampleSSHCrawlStrategy.yaml) for example/documentation.
+    2. Crate `web.yaml` file  
+        1. "Providers", "skips" , and "Hints" are all defined in [examples/web.yaml](examples/web.yaml). 
+1. Run `itsybitsy --help` for all available commands and `itsybitsy spider --help` and `itsybitsy render --help` for command specific configuration.
+1. Disable builtin provider with the argument `--disable-providers ssh aws k8s`
+1. Set any configurations which are known to be required for every run in `spider.conf` see [./examples/spider.conf.example](./examples/spider.conf.example)
+  1. Hint: `spider.conf` is always inherited, but you can create different profiles such as `spider.prod.conf` and reference them with the `--profile` arg
+1. Note: unlike the `spider` command, `render` is written to stand alone and parse the default json file in `outputs/.lastrun.json` it requires no arguments by default.
 
 
 ## Use
 #### 1 Run in `spider` mode:
 
-Either provide (a) seed(s) with the `-s` argument, or `--load-json` to load and render. 
-
-##### ascii live output
 ```
 $ itsybitsy spider -s ssh:$SEED_IP
 foo [seed] (10.1.0.26)
@@ -33,7 +44,7 @@ foo [seed] (10.1.0.26)
 ```
 
 
-#### 3 Run the script in `load-json` mode
+#### 3 Run in `render` mode
 It will by default render the "last run" automatically dumped to .lastrun.json.  Or you can pass in `-f` to load a specific file.  The default renderer is `ascii` unless a different render is passed in, as in `--output graphviz`
 
 ``` 
