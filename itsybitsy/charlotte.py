@@ -68,10 +68,12 @@ class CrawlStrategy:
             try:
                 if int(protocol_mux) in self.child_provider['matches']:
                     return self.child_provider['matches'][int(protocol_mux)]
+                return self.child_provider['default']
             except (ValueError, IndexError):
                 return self.child_provider['default']
 
-        raise CrawlStrategyException(f"child provider match type: {self.child_provider['type']} not supported")
+        logs.logger.fatal(f"child provider match type: {self.child_provider['type']} not supported")
+        raise CrawlStrategyException()
 
     def rewrite_service_name(self, service_name: str, node) -> str:
         """

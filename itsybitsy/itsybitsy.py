@@ -69,7 +69,6 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
     formatter_class = lambda prog: ConciseHelpFormatter(prog, max_help_position=100, width=200)
     global argparser, spider_subparser
     argparser = configargparse.ArgumentParser(
-        default_config_files=['./spider.conf'],
         description=(
             "Give it (a) seed host(s).\n"
             "It will crawl them.\n"
@@ -84,7 +83,7 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
     subparsers.required = True
     subparsers.dest = 'command'
     spider_p = subparsers.add_parser(command_spider, help='Crawl a network of services - given a seed',
-                                     formatter_class=formatter_class)
+                                     formatter_class=formatter_class, default_config_files=['./spider.conf'])
     render_p = subparsers.add_parser(command_render, help='Render results of a previous crawl',
                                      formatter_class=formatter_class)
     spider_subparser = spider_p

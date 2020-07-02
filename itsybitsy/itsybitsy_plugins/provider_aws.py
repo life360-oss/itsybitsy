@@ -42,7 +42,7 @@ class ProviderAWS(ProviderInterface):
                                                   'This will override the AWS_PROFILE environment variable.')
         argparser.add_argument('--service-name-tag', required=True, metavar='TAG',
                                help='AWS tag associated with service name')
-        argparser.add_argument('--tag-filters', nargs='*',  metavar='FILTER',
+        argparser.add_argument('--tag-filters', nargs='*',  metavar='FILTER', default = [],
                                help='Additional AWS tags to filter on or services.  Specified in format: '
                                     '"TAG_NAME=VALUE" pairs')
 
