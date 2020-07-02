@@ -134,7 +134,8 @@ async def _configure(address: str):
             asyncssh.connect(jump_server_address, **ssh_connect_args), timeout=5
         )
     except asyncio.TimeoutError:
-        print(colored(f"Timeout connecting to SSH bastion server: {address}.  Try turning it off and on again.", 'red'))
+        print(colored(f"Timeout connecting to SSH bastion server: {jump_server_address}.  "
+                      f"Try turning it off and on again.", 'red'))
         sys.exit(1)
     except asyncssh.PermissionDenied:
         print(colored(f"SSH Permission denied attempting to connect to {address}.  It is possible that your SSH Key "
