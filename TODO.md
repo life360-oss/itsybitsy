@@ -147,6 +147,8 @@
 * [x] REFACTOR: (all): refactor package architecture
 * [x] TIMEOUT: (crawl) robust provider timeout and exception handling
 * [x] OBSCURIFIER (render_*): obscurifier for output
+* [x] BUG: fix namespace package not being include in dist
+* [ ] DOCS: remove non obfuscated example video from README
 * [ ] LOGGER: rewrite logger access for community standards
 * [ ] PLUGPLAY: out of the box functionality by moving TCP to a "builtin" CrawlStrategy and using `hostname` or default service name
 * [ ] REFACTOR: (providers): rewrite take_a_hint to not return a list, just return a single NodeTransport
