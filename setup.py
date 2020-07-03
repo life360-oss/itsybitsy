@@ -1,5 +1,5 @@
 import re
-from setuptools import setup
+from setuptools import setup, find_namespace_packages
 
 version = re.search(
     r'^__version__\s*=\s*"(.*)"',
@@ -19,7 +19,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/life360/itsybitsy",
-    packages=["itsybitsy"],
+    packages=['itsybitsy', 'itsybitsy.itsybitsy_plugins'],
     entry_points={
         "console_scripts": ['itsybitsy = itsybitsy.itsybitsy:main']
     },
