@@ -1,7 +1,7 @@
 # Copyright # Copyright 2020 Life360, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-__version__ = "0.0.1"
+__version__ = "0.0.3"
 
 import asyncio
 import argparse
