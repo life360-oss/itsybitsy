@@ -10,7 +10,6 @@ import pprint
 # independent constants
 ARGS = None
 CHARLOTTE_DIR = 'charlotte.d'
-CRAWL_TIMEOUT = 30
 OUTPUTS_DIR = 'outputs'
 GRAPHVIZ_RANKDIR_AUTO = 'auto'
 GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM = 'TB'

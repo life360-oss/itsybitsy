@@ -1,7 +1,7 @@
 # Copyright # Copyright 2020 Life360, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 import asyncio
 import argparse
@@ -109,10 +109,12 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
                            help='A list of services to highlight in graphviz.')
         sub_p.add_argument('--debug', action='store_true', help='Log debug output to stderr')
 
-    # crawl command args
+    # spider command args
     spider_p.add_argument('-s', '--seeds', required=True, nargs='+', metavar='SEED',
                           help='Seed host(s) to begin crawling viz. an IP address or hostname.  Must be in the format: '
                                '"provider:address".  e.g. "ssh:10.0.0.42" or "k8s:widget-machine-5b5bc8f67f-2qmkp')
+    spider_p.add_argument('-t', '--timeout', type=int, default=60, metavar='TIMEOUT',
+                          help='Timeout when crawling a node')
     spider_p.add_argument('-d', '--max-depth', type=int, default=100, metavar='DEPTH', help='Max tree depth to crawl')
     spider_p.add_argument('-c', '--config-file', is_config_file=True, metavar='FILE', help='Specify a config file path')
     spider_p.add_argument('-X', '--disable-providers', nargs='+', default=[], metavar='PROVIDER',
