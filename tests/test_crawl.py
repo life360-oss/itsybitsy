@@ -20,6 +20,11 @@ def clear_caches():
     crawl.child_cache = {}
 
 
+@pytest.fixture(autouse=True)
+def set_default_timeout(builtin_providers, cli_args_mock):
+    cli_args_mock.timeout = 30
+
+
 @pytest.fixture
 def mock_provider_ref() -> str:
     return 'mock_provider'
@@ -119,10 +124,10 @@ async def test_crawl_case_open_connection_handles_timeout_exception(tree, provid
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, cs_mock, mocker):
+async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, cs_mock, cli_args_mock, mocker):
     """A natural timeout during ProviderInterface::open_connections is also handled by setting TIMEOUT error"""
     # arrange
-    mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
+    cli_args_mock.timeout = .1
 
     async def slow_open_connection(address):
         await asyncio.sleep(1)
@@ -166,10 +171,10 @@ async def test_crawl_case_lookup_name_uses_cache(tree, node_fixture_factory, pro
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_lookup_name_handles_timeout(tree, provider_mock, cs_mock, mocker):
+async def test_crawl_case_lookup_name_handles_timeout(tree, provider_mock, cs_mock, cli_args_mock, mocker):
     """Timeout is handled during lookup_name and results in a sys.exit"""
     # arrange
-    mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
+    cli_args_mock.timeout = .1
 
     async def slow_lookup_name(address):
         await asyncio.sleep(1)
@@ -249,10 +254,10 @@ async def test_crawl_case_crawl_downstream_uses_cache(tree, node_fixture_factory
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, cs_mock, mocker):
+async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, cs_mock, cli_args_mock, mocker):
     """Timeout is respected during crawl_downstream and results in a sys.exit"""
     # arrange
-    mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
+    cli_args_mock.timeout = .1
 
     async def slow_crawl_downstream(address, connection):
         await asyncio.sleep(1)
@@ -268,10 +273,10 @@ async def test_crawl_case_crawl_downstream_handles_timeout(tree, provider_mock, 
 
 
 @pytest.mark.asyncio
-async def test_crawl_case_crawl_downstream_handles_exceptions(tree, provider_mock, cs_mock, mocker):
+async def test_crawl_case_crawl_downstream_handles_exceptions(tree, provider_mock, cs_mock, cli_args_mock, mocker):
     """Any exceptions thrown by crawl_downstream are handled by exiting the program"""
     # arrange
-    mocker.patch('itsybitsy.constants.CRAWL_TIMEOUT', .1)
+    cli_args_mock.timeout = .1
     provider_mock.lookup_name.return_value = 'dummy'
     provider_mock.open_connection.side_effect = Exception('BOOM')
 

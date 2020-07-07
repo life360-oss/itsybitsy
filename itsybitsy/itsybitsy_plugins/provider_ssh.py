@@ -33,6 +33,8 @@ class ProviderSSH(ProviderInterface):
 
     @staticmethod
     def register_cli_args(argparser: ProviderArgParser):
+        argparser.add_argument('--bastion-timeout', type=int, default=10, metavar='TIMEOUT',
+                               help='Timeout in seconds to establish SSH connection to bastion (jump server)')
         argparser.add_argument('--concurrency', type=int, default=10, metavar='CONCURRENCY',
                                help='Max number of concurrent SSH connections')
         argparser.add_argument('--config-file', default="~/.ssh/config", metavar='FILE',
@@ -128,7 +130,7 @@ async def _configure(address: str):
 
     try:
         bastion = await asyncio.wait_for(
-            asyncssh.connect(jump_server_address, **ssh_connect_args), timeout=5
+            asyncssh.connect(jump_server_address, **ssh_connect_args), timeout=constants.ARGS.ssh_bastion_timeout
         )
     except asyncio.TimeoutError:
         print(colored(f"Timeout connecting to SSH bastion server: {jump_server_address}.  "

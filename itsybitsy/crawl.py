@@ -84,7 +84,7 @@ async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (lis
     # open optional provider connections
     conns = await asyncio.gather(
         *[asyncio.wait_for(
-            _open_connection(node.address, providers.get(node.provider)), constants.CRAWL_TIMEOUT
+            _open_connection(node.address, providers.get(node.provider)), constants.ARGS.timeout
         ) for node_ref, node in tree.items()],
         return_exceptions=True
     )
@@ -130,7 +130,7 @@ async def _lookup_service_names(tree: Dict[str, Node], conns: list) -> (List[str
     service_names = await asyncio.gather(
         *[asyncio.wait_for(
             _lookup_service_name(node.address, providers.get(node.provider), conn),
-            constants.CRAWL_TIMEOUT) for node, conn in zip(tree.values(), conns)],
+            constants.ARGS.timeout) for node, conn in zip(tree.values(), conns)],
         return_exceptions=True
     )
 
@@ -213,14 +213,14 @@ def _compile_crawl_tasks_and_crawl_strategies(address: str, service_name: str, p
         crawl_strategies.append(cs)
         tasks.append(asyncio.wait_for(
             provider.crawl_downstream(address, connection, **cs.provider_args),
-            timeout=constants.CRAWL_TIMEOUT
+            timeout=constants.ARGS.timeout
         ))
 
     # take hints
     for hint in [hint for hint in charlotte_web.hints(service_name)
                  if hint.instance_provider not in constants.ARGS.disable_providers]:
         hint_provider = providers.get(hint.instance_provider)
-        tasks.append(asyncio.wait_for(hint_provider.take_a_hint(hint), timeout=constants.CRAWL_TIMEOUT))
+        tasks.append(asyncio.wait_for(hint_provider.take_a_hint(hint), timeout=constants.ARGS.timeout))
         crawl_strategies.append(
             replace(
                 charlotte.HINT_CRAWL_STRATEGY,
