@@ -1,1 +1,1 @@
--e "../.."
+git+ssh://git@github.com/life360-oss/itsybitsy.git#egg=itsybitsy
