@@ -91,9 +91,9 @@ protocols:
     assert is_database == protocol.is_database
 
 
-def test_skip(charlotte_d, mocker):
-    """We are able to correctly match a skip loaded from disk"""
-    # Technically an integration test that tests the interaction of spin_up() and skip()
+def test_skip_service_name(charlotte_d, mocker):
+    """We are able to correctly match a service_name skip loaded from disk"""
+    # Technically an integration test that tests the interaction of spin_up() and skip_service_name()
     # arrange
     mocker.patch('itsybitsy.charlotte_web._validate', return_value=None)
     hint_web_yaml = f"""
@@ -108,15 +108,43 @@ skips:
     charlotte_web.spin_up()
 
     # assert
-    assert charlotte_web.skip('bar')
-    assert charlotte_web.skip('barf')
-    assert charlotte_web.skip('foo')
-    assert charlotte_web.skip('foo-service')
-    assert charlotte_web.skip('food-service')
-    assert charlotte_web.skip('a-fool-service')
-    assert not charlotte_web.skip('oof-service')
-    assert not charlotte_web.skip('fo')
-    assert not charlotte_web.skip('cats')
+    assert charlotte_web.skip_service_name('bar')
+    assert charlotte_web.skip_service_name('barf')
+    assert charlotte_web.skip_service_name('foo')
+    assert charlotte_web.skip_service_name('foo-service')
+    assert charlotte_web.skip_service_name('food-service')
+    assert charlotte_web.skip_service_name('a-fool-service')
+    assert not charlotte_web.skip_service_name('oof-service')
+    assert not charlotte_web.skip_service_name('fo')
+    assert not charlotte_web.skip_service_name('cats')
+
+
+def test_skip_protocol_mux(charlotte_d, mocker):
+    """We are able to correctly match a protocol_mux skip loaded from disk"""
+    # Technically an integration test that tests the interaction of spin_up() and skip_protocol_mux()
+    # arrange
+    mocker.patch('itsybitsy.charlotte_web._validate', return_value=None)
+    hint_web_yaml = f"""
+skips:
+  service_names:
+    - "foo"
+    - "bar"
+"""
+    _write_stub_web_yaml(charlotte_d, hint_web_yaml)
+
+    # act
+    charlotte_web.spin_up()
+
+    # assert
+    assert charlotte_web.skip_service_name('bar')
+    assert charlotte_web.skip_service_name('barf')
+    assert charlotte_web.skip_service_name('foo')
+    assert charlotte_web.skip_service_name('foo-service')
+    assert charlotte_web.skip_service_name('food-service')
+    assert charlotte_web.skip_service_name('a-fool-service')
+    assert not charlotte_web.skip_service_name('oof-service')
+    assert not charlotte_web.skip_service_name('fo')
+    assert not charlotte_web.skip_service_name('cats')
 
 
 def test_hints(charlotte_d, mocker):

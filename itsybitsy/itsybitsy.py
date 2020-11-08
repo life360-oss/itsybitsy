@@ -1,11 +1,12 @@
 # Copyright # Copyright 2020 Life360, Inc
 # SPDX-License-Identifier: Apache-2.0
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 import asyncio
 import argparse
 import configargparse
+import getpass
 import logging
 import os
 import signal
@@ -213,7 +214,7 @@ def main():
     charlotte.init()
 
     # hello
-    print(f"Hello, {os.getlogin()}", file=sys.stderr)
+    print(f"Hello, {getpass.getuser()}", file=sys.stderr)
 
     # render OR spider
     _create_outputs_directory_if_absent()
@@ -236,4 +237,4 @@ def main():
         sys.exit(1)
 
     # g'bye
-    print(f"\nGoodbye, {os.getlogin()}\n", file=sys.stderr)
+    print(f"\nGoodbye, {getpass.getuser()}\n", file=sys.stderr)

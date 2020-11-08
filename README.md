@@ -14,6 +14,7 @@ Configure charlotte, give it a seed node, and it crawls the graph/tree of your s
 1. Review the example project in [examples/example-project](examples/example-project)
 1. Start a new project / empty folder
     1. `mkdir myitsybitsy && cd myitsybitsy`
+    1. `venv'
     1. `echo "git+ssh://git@github.com/life360/itsybitsy.git#egg=itsybitsy" > requirements.txt`
     1. `pip install -r requirements.txt`
 1. Configure charlotte - the configuration engine with which you will describe your service graph to itsybitsy

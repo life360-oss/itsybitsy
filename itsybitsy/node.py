@@ -47,7 +47,10 @@ class Node:
         if bool(self.errors) or bool(self.warnings):
             return False
 
-        if self.service_name and charlotte_web.skip(self.service_name):
+        if charlotte_web.skip_protocol_mux(self.protocol_mux):
+            return False
+
+        if self.service_name and charlotte_web.skip_service_name(self.service_name):
             return False
 
         is_child_or_grandchild = depth > 0

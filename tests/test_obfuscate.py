@@ -18,7 +18,7 @@ def test_obfuscate_service_name():
     assert obfuscated_service_name == obfuscated_service_name_two
     assert obfuscated_service_name is not None
     assert obfuscated_service_name != ''
-    assert len(obfuscated_service_name) > 10
+    assert len(obfuscated_service_name) > 5
 
 
 @pytest.mark.parametrize('real_mux,expect_mux_match', [('8080', '[0-9]+'), ('foobar', '[a-z]+#[a-z]+')])

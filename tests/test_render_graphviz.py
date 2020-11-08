@@ -130,6 +130,20 @@ def test_render_tree_case_node_errors(tree_named, capsys):
     assert f"{list(tree.values())[0].service_name} [color=red style=bold]" in captured.out
 
 
+def test_render_tree_case_node_warnings(tree_named, capsys):
+    """Node with warnings rendered as such"""
+    # arrange
+    tree = tree_named
+    list(tree.values())[0].warnings = {'FOO': True}
+
+    # act
+    render_graphviz.render_tree(tree, True)
+    captured = capsys.readouterr()
+
+    # assert
+    assert f"{list(tree.values())[0].service_name} [color=darkorange style=bold]" in captured.out
+
+
 def test_render_tree_case_node_name_cleaned(tree, capsys):
     """Test that the node name is cleaned during render"""
     # arrange

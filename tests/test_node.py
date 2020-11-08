@@ -17,7 +17,16 @@ class TestNode:
         """not crawlable if service name is skipped"""
         # arrange
         node_fixture.service_name = 'dummy'
-        mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=True)
+        mocker.patch('itsybitsy.node.charlotte_web.skip_service_name', return_value=True)
+
+        # act/assert
+        assert not node_fixture.is_crawlable(0)
+
+    def test_is_crawlable_case_skip_protocol_mux(self, node_fixture, mocker):
+        """not crawlable if protocol_mux is skipped"""
+        # arrange
+        node_fixture.service_name = 'dummy'
+        mocker.patch('itsybitsy.node.charlotte_web.skip_protocol_mux', return_value=True)
 
         # act/assert
         assert not node_fixture.is_crawlable(0)
@@ -27,7 +36,8 @@ class TestNode:
         # arrange
         cli_args_mock.skip_nonblocking_grandchildren = True
         node_fixture.service_name = 'dummy'
-        mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=False)
+        mocker.patch('itsybitsy.node.charlotte_web.skip_service_name', return_value=False)
+        mocker.patch('itsybitsy.node.charlotte_web.skip_protocol_mux', return_value=False)
         node_fixture.protocol = mocker.patch('itsybitsy.charlotte_web.Protocol', autospec=True, blocking=False)
 
         # act/assert
@@ -38,7 +48,8 @@ class TestNode:
         # arrange
         cli_args_mock.skip_nonblocking_grandchildren = False
         node_fixture.service_name = 'dummy'
-        mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=False)
+        mocker.patch('itsybitsy.node.charlotte_web.skip_service_name', return_value=False)
+        mocker.patch('itsybitsy.node.charlotte_web.skip_protocol_mux', return_value=False)
 
         # act/assert
         assert node_fixture.is_crawlable(0)
@@ -126,7 +137,7 @@ class TestNode:
         # arrange
         node_fixture.name_lookup_complete = mocker.Mock(return_value=True)
         node_fixture.service_name = 'stub'
-        skip = mocker.patch('itsybitsy.node.charlotte_web.skip', return_value=True)
+        skip = mocker.patch('itsybitsy.node.charlotte_web.skip_service_name', return_value=True)
 
         # act/assert
         assert node_fixture.crawl_complete(0)
