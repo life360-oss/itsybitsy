@@ -109,6 +109,23 @@ async def test_crawl_case_connection_opened_and_passed(tree, provider_mock, cs_m
 
 
 @pytest.mark.asyncio
+async def test_crawl_case_open_connection_handles_skip_protocol_mux(tree, provider_mock, cs_mock, mocker):
+    """If a node should be skipped due to protocol_mux, we do not even open the connection and we set an error."""
+    # arrange
+    skip_function = mocker.patch('itsybitsy.charlotte_web.skip_protocol_mux', return_value=True)
+
+    # act
+    await crawl.crawl(tree, [])
+
+    # assert
+    assert 'CONNECT_SKIPPED' in list(tree.values())[0].errors
+    provider_mock.open_connection.assert_not_called()
+    provider_mock.lookup_name.assert_not_called()
+    provider_mock.crawl_downstream.assert_not_called()
+    skip_function.assert_called_once_with(list(tree.values())[0].protocol_mux)
+
+
+@pytest.mark.asyncio
 async def test_crawl_case_open_connection_handles_timeout_exception(tree, provider_mock, cs_mock):
     """Respects the contractual TimeoutException or ProviderInterface.  If thrown we set TIMEOUT error
     but do not stop crawling"""
@@ -129,7 +146,7 @@ async def test_crawl_case_open_connection_handles_timeout(tree, provider_mock, c
     # arrange
     cli_args_mock.timeout = .1
 
-    async def slow_open_connection(address):
+    async def slow_open_connection(_):
         await asyncio.sleep(1)
     provider_mock.open_connection.side_effect = slow_open_connection
 
@@ -599,7 +616,7 @@ async def test_crawl_case_respect_charlotte_web_skip(tree, provider_mock, cs_moc
     # arrange
     service_name = 'foo_name'
     provider_mock.lookup_name.return_value = service_name
-    skip_function = mocker.patch('itsybitsy.charlotte_web.skip', return_value=True)
+    skip_function = mocker.patch('itsybitsy.charlotte_web.skip_service_name', return_value=True)
 
     # act
     await crawl.crawl(tree, [])

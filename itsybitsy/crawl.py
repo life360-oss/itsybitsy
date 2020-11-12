@@ -33,8 +33,20 @@ async def crawl(tree: Dict[str, Node], ancestors: list):
         return
 
     nodes_with_conns = [(item[0], item[1], conn) for item, conn in zip(tree.items(), conns)]
-    crawlable_nodes = [(ref, node, conn) for ref, node, conn in nodes_with_conns if node.is_crawlable(depth)]
+    crawlable_nodes = _filter_uncrawlable_nodes_and_add_warnings(nodes_with_conns, depth)
     await _find_children_and_recursively_crawl(tree, crawlable_nodes, depth, ancestors)
+
+
+def _filter_uncrawlable_nodes_and_add_warnings(nodes_with_conns: List[Tuple[str, Node, type]],
+                                               depth: int) -> List[Tuple[str, Node, type]]:
+    crawlable_nodes = []
+    for ref, node, conn in nodes_with_conns:
+        if node.is_crawlable(depth):
+            crawlable_nodes.append((ref, node, conn))
+        else:
+            node.warnings['CRAWL_SKIPPED'] = True
+
+    return crawlable_nodes
 
 
 async def _find_children_and_recursively_crawl(tree: Dict[str, Node], crawlable_nodes: List[Tuple[str, Node, type]],
@@ -84,15 +96,38 @@ async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (lis
     We use sys.exit() to ensure the entire program is halted and not simply the individual task in which an exception
     was raised.
     """
-    # open optional provider connections
-    conns = await asyncio.gather(
+    connectable_tree = _filter_skipped_nodes_and_add_errors(tree)
+    conns = await _gather_connections(connectable_tree)
+    exceptions = [(ref, e) for ref, e in zip(list(connectable_tree), conns) if isinstance(e, Exception)]
+    _handle_connection_open_exceptions(exceptions, tree, ancestors)
+    clean_tree = {item[0]: item[1] for item, conn in zip(connectable_tree.items(), conns)
+                  if not isinstance(conn, Exception)}
+    clean_conns = [conn for conn in conns if not isinstance(conn, Exception)]
+
+    return clean_conns, clean_tree
+
+
+def _filter_skipped_nodes_and_add_errors(tree: Dict[str, Node]) -> Dict[str, Node]:
+    connectable_tree = {}
+    for ref, node in tree.items():
+        if charlotte_web.skip_protocol_mux(node.protocol_mux):
+            node.errors['CONNECT_SKIPPED'] = True
+        else:
+            connectable_tree[ref] = node
+    return connectable_tree
+
+
+async def _gather_connections(tree: Dict[str, Node]):
+    return await asyncio.gather(
         *[asyncio.wait_for(
             _open_connection(node.address, providers.get(node.provider)), constants.ARGS.timeout
         ) for node_ref, node in tree.items()],
         return_exceptions=True
     )
-    # handle exceptions
-    exceptions = [(ref, e) for ref, e in zip(list(tree), conns) if isinstance(e, Exception)]
+
+
+def _handle_connection_open_exceptions(exceptions: List[Tuple[str, Exception]], tree: Dict[str, Node],
+                                       ancestors: List[str]):
     for node_ref, e in exceptions:
         if isinstance(e, (providers.TimeoutException, asyncio.TimeoutError)):
             logs.logger.debug(f"Connection timeout when attempting to connect to {node_ref} with address: "
@@ -105,19 +140,13 @@ async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (lis
             traceback.print_tb(e.__traceback__)
             sys.exit(1)
 
-    # reset conns/tree excluding TimeoutExceptions so that we can zip()
-    clean_tree = {item[0]: item[1] for item, conn in zip(tree.items(), conns) if not isinstance(conn, Exception)}
-    clean_conns = [conn for conn in conns if not isinstance(conn, Exception)]
-
-    return clean_conns, clean_tree
-
 
 async def _open_connection(address: str, provider: providers.ProviderInterface):
     if address in service_name_cache:
         if service_name_cache[address] is None:
             logs.logger.debug(f"Not opening connection: name is None ({address}")
             return None
-        if charlotte_web.skip(service_name_cache[address]):
+        if charlotte_web.skip_service_name(service_name_cache[address]):
             logs.logger.debug(f"Not opening connection: skip ({service_name_cache[address]})")
             return None
         if service_name_cache[address] in child_cache:
@@ -192,7 +221,6 @@ async def _crawl_with_hints(provider_ref: str, node_ref: str, address: str, serv
     children = {}
     for node_transports, crawl_strategy in [(nts, cs) for nts, cs in zip(crawl_results, crawl_strategies) if nts]:
         for node_transport in node_transports:
-            # skip if configured
             if _skip_protocol_mux(node_transport.protocol_mux):
                 continue
             child_ref, child = _create_node(crawl_strategy, node_transport)

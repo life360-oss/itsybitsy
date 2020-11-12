@@ -41,6 +41,7 @@ _web_file = 'web.yaml'
 _hints:  Dict[str, List[Hint]] = {}
 _protocols: Dict[str, Protocol] = {}
 _skip_service_names: List[str] = []
+_skip_protocol_muxes: List[str] = []
 
 PROTOCOL_SEED = Protocol('SEED', 'Seed', True)
 PROTOCOL_HINT = Protocol('HNT', 'Hint', True)
@@ -50,30 +51,15 @@ _protocols['HNT'] = PROTOCOL_HINT
 
 
 def spin_up():
-    """
-    It initializes the web from web.yaml
-    :return:
-    """
+    """It initializes the web from web.yaml"""
     with open(os.path.join(constants.CHARLOTTE_DIR, _web_file), 'r') as stream:
-        global _hints, _skip_service_names
-        try:
-            configs = safe_load(stream)
-        except Exception as e:
-            raise WebYamlException(f"Unable to load yaml {_web_file}") from e
+        configs = _parse_yaml_config(stream)
+        _parse_protocols(configs)
+        _parse_skips(configs)
 
-        # protocols
-        if configs.get('protocols'):
-            try:
-                for protocol, attrs in configs.get('protocols').items():
-                    attrs.update({'ref': protocol})
-                    _protocols[protocol] = Protocol(**attrs)
-            except Exception as e:
-                raise WebYamlException(f"protocols malformed in {_web_file}") from e
-
-        # skips
-        _skip_service_names = configs.get('skips').get('service_names') if configs.get('skips') else []
 
         # hints
+        global _hints
         if configs.get('hints'):
             for service_name, lst in configs.get('hints').items():
                 try:
@@ -87,33 +73,43 @@ def spin_up():
         _validate()
 
 
-def skip(service_name: str) -> bool:
-    """
-    Whether to skip the service name
-    :param service_name:
-    :return:
-    """
+def _parse_yaml_config(stream) -> Dict[str, dict]:
+    try:
+        return safe_load(stream)
+    except Exception as e:
+        raise WebYamlException(f"Unable to load yaml {_web_file}") from e
+
+
+def _parse_protocols(configs: Dict[str, dict]) -> None:
+    if not configs.get('protocols'):
+        return
+
+    try:
+        for protocol, attrs in configs.get('protocols').items():
+            _protocols[protocol] = Protocol(ref=protocol, **attrs)
+    except Exception as e:
+        raise WebYamlException(f"protocols malformed in {_web_file}") from e
+
+
+def _parse_skips(configs: Dict[str, dict]) -> None:
+    global _skip_service_names, _skip_protocol_muxes
+    _skip_service_names = configs.get('skips').get('service_names') if configs.get('skips') else []
+    _skip_protocol_muxes = configs.get('skips').get('protocol_muxes') if configs.get('skips') else []
+
+
+def skip_service_name(service_name: str) -> bool:
     return True in [match in service_name for match in _skip_service_names]
 
 
+def skip_protocol_mux(protocol_mux: str) -> bool:
+    return True in [match in protocol_mux for match in _skip_protocol_muxes]
+
+
 def hints(service_name: str) -> List[Hint]:
-    """
-    Return a list of hints for service name
-
-    :param service_name:
-    :return:
-    """
-
     return _hints.get(service_name) or []
 
 
 def get_protocol(ref: str) -> Protocol:
-    """
-    Return a protocol
-
-    :param ref: a string reference to a protocol. e.g. "NSQ", "HAP"
-    :return:
-    """
     try:
         return _protocols[ref]
     except KeyError as e:

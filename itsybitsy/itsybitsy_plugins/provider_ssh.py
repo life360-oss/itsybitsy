@@ -184,7 +184,7 @@ def _get_jump_server_for_host(config: dict) -> str:
     bastion_host = proxyjump_host or proxycommand_host
 
     if not bastion_host:
-        print(colored(f"Required SSH directive ProxyJump (or ProxyCommand) not found (or miconfigred)"
+        print(colored(f"Required SSH directive ProxyJump (or ProxyCommand) not found (or misconfigured)"
                       f" in {config_file_path}... Please correct your ssh config! SSH directives found:", 'red'))
         constants.PP.pprint(config)
         sys.exit(1)

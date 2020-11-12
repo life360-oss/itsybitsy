@@ -102,7 +102,7 @@ def _compile_node(node: Node, name: str, blocking_from_top: bool) -> None:
     if name not in nodes_compiled or blocking_from_top and not nodes_compiled[name].get('blocking_from_top'):
         style = 'bold' if blocking_from_top else None
         shape = 'cylinder' if node.is_database() else 'septagon' if node.containerized else None
-        color = 'red' if node.errors else None
+        color = 'red' if node.errors else 'darkorange' if node.warnings else None
         dot.node(name, shape=shape, style=style, color=color)
         nodes_compiled[name] = {'blocking_from_top': blocking_from_top}
 

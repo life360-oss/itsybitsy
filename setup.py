@@ -1,5 +1,5 @@
 import re
-from setuptools import setup, find_namespace_packages
+from setuptools import setup
 
 version = re.search(
     r'^__version__\s*=\s*"(.*)"',

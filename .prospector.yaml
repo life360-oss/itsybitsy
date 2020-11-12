@@ -3,6 +3,7 @@ inherits:
 
 ignore-paths:
   - build
+  - dist
 
 pylint:
   disable:
