@@ -25,7 +25,7 @@ setup(
     },
     install_requires=[
         'asyncssh~=2.2.0',
-        'boto3~=1.12.32',
+        'boto3~=1.16.35',
         'configargparse~=1.2.3',
         'coolname~=1.1.0',
         'faker~=4.1.1',
