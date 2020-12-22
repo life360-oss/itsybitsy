@@ -16,8 +16,8 @@ from termcolor import colored
 from typing import Dict, Optional
 
 from . import plugins
-from . import charlotte, charlotte_web, constants, crawl, logs, node, providers, render_ascii, render_graphviz, \
-    render_json
+from . import charlotte, charlotte_web, constants, crawl, logs, node, providers, render_ascii, render_text, \
+    render_graphviz, render_json
 
 
 # module globals
@@ -89,7 +89,7 @@ def parse_builtin_args() -> (configargparse.Namespace, list):
                                      formatter_class=formatter_class)
     spider_subparser = spider_p
 
-    render_choices = ['ascii', 'pprint', 'json', 'graphviz', 'graphviz_source']
+    render_choices = ['ascii', 'pprint', 'json', 'graphviz', 'graphviz_source', 'text']
     # add common opts to each sub parser
     for sub_p in subparsers.choices.values():
         # common args
@@ -191,7 +191,8 @@ def render(tree: Dict[str, node.Node]) -> None:
             render_graphviz.render_tree(tree)
         if 'graphviz_source' in constants.ARGS.output:
             render_graphviz.render_tree(tree, True)
-
+        if 'text' in constants.ARGS.output:
+            render_text.render_tree(tree)
 
 def main():
     # plugins

@@ -8,29 +8,6 @@ import pytest
 import sys
 
 
-@pytest.fixture
-def tree_stubbed(tree) -> Dict[str, Node]:
-    """Tree with seed node having basic attributes stubbed"""
-    list(tree.values())[0].service_name = 'foo'
-    list(tree.values())[0].address = '1.2.3.4'
-
-    return tree
-
-
-@pytest.fixture
-def tree_stubbed_with_child(tree_stubbed, node_fixture) -> Dict[str, Node]:
-    """Stubbed tree, with 1 child added with basic characteristics stubbed"""
-    # arrange
-    seed = tree_stubbed[list(tree_stubbed)[0]]
-    child = replace(node_fixture, service_name='bar')
-    child.service_name = 'baz'
-    child.children = {}
-    child.address = '5.6.7.8'
-    seed.children = {'child_node': child}
-
-    return tree_stubbed
-
-
 @pytest.fixture(autouse=True)
 def set_default_cli_args(cli_args_mock):
     cli_args_mock.render_ascii_verbose = False
