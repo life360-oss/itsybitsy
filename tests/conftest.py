@@ -83,6 +83,14 @@ def tree_stubbed_with_child(tree_stubbed, node_fixture) -> Dict[str, Node]:
     return tree_stubbed
 
 
+@pytest.fixture
+def tree_named(tree):
+    """single node tree fixture - where the node has the service_name field filled out"""
+    list(tree.values())[0].service_name = 'dummy'
+
+    return tree
+
+
 @pytest.fixture()
 def charlotte_d(tmp_path, mocker) -> str:
     """Return temp charlotte dir {str}, also making tmp dir on the filesystem and patching globals.CHARLOTTE_DIR

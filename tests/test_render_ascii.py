@@ -207,7 +207,64 @@ async def test_render_tree_case_merged_nodes(tree_stubbed_with_child, capsys):
     # act
     await _helper_render_tree_with_timeout(tree_stubbed_with_child)
     captured = capsys.readouterr()
-    print(captured)
 
     # assert
     assert f"--> {child.service_name} [port:{expected_merged_mux}]" in captured.out
+
+
+@pytest.mark.asyncio
+async def test_render_tree_case_node_hint_merged(tree_named, protocol_fixture, node_fixture_factory, capsys):
+    """Tests that two child nodes which are on the same protocol/mux are merged together if 1 is a hint"""
+    # arrange
+    protocol_ref, protocol_mux, error, service_name = ('FOO', 'barbaz', 'BUZZ', 'qux')
+    protocol_fixture = replace(protocol_fixture, ref=protocol_ref)
+    child_node_crawled = replace(node_fixture_factory(), service_name=None, errors={error: True})
+    child_node_crawled.protocol = protocol_fixture
+    child_node_crawled.protocol_mux = protocol_mux
+    child_node_hint = replace(node_fixture_factory(), service_name=service_name, from_hint=True)
+    child_node_hint.protocol = protocol_fixture
+    child_node_hint.protocol_mux = protocol_mux
+    tree = tree_named
+    list(tree.values())[0].children = {'crawled': child_node_crawled, 'hinted': child_node_hint}
+
+    # act
+    await _helper_render_tree_with_timeout(tree)
+    captured = capsys.readouterr()
+
+    # assert
+    assert 'UNKNOWN' not in captured.out
+    assert f"\x1b[36m{{INFO:FROM_HINT}} \x1b[0m\x1b[31m{{ERR:{error}}} \x1b[0m{service_name}" in captured.out
+
+
+@pytest.mark.asyncio
+async def test_render_tree_case_node_nonhint_not_merged(tree_named, protocol_fixture, node_fixture_factory, capsys):
+    """
+    Ensures that 2 children on the same protocol/mux are not accidentally merged into one
+    Ensures that 2 children not on the same protocol/mux are not accidentally merged into one
+    """
+    # arrange
+    protocol_ref, protocol_mux_1, protocol_mux_2, child_1_name, child_2_name, child_3_name = \
+        ('FOO', 'barbaz', 'buzzqux', 'quxx', 'quz', 'clorge')
+    protocol_fixture = replace(protocol_fixture, ref=protocol_ref)
+    child_1 = replace(node_fixture_factory(), service_name=child_1_name)
+    child_1.protocol = protocol_fixture
+    child_1.protocol_mux = protocol_mux_1
+    child_1.children = []
+    child_2 = replace(node_fixture_factory(), service_name=child_2_name)
+    child_2.protocol = protocol_fixture
+    child_2.protocol_mux = protocol_mux_1
+    child_2.children = []
+    child_3 = replace(node_fixture_factory(), service_name=child_3_name)
+    child_3.protocol = protocol_fixture
+    child_3.protocol_mux = protocol_mux_2
+    child_3.children = []
+
+    list(tree_named.values())[0].children = {'child1': child_1, 'child2': child_2, 'child3': child_3}
+
+    # act
+    await _helper_render_tree_with_timeout(tree_named)
+    captured = capsys.readouterr()
+
+    assert child_1_name in captured.out
+    assert child_2_name in captured.out
+    assert child_3_name in captured.out

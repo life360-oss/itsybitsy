@@ -2,7 +2,6 @@ from . import node
 from typing import Dict
 
 flat_relationships = {}
-listening_servics = {}
 
 
 def render_tree(tree: Dict[str, node.Node]) -> None:
@@ -18,7 +17,7 @@ def build_flat_services(tree_node: node.Node) -> None:
         return
 
     for child in tree_node.children.values():
-        relationship = f"{tree_node.service_name or 'UNKNOWN'} -> " \
+        relationship = f"{tree_node.service_name or 'UNKNOWN'} --[{child.protocol.ref}]--> " \
                        f"{child.service_name or 'UNKNOWN'} ({child.protocol_mux})"
         if relationship not in flat_relationships:
             flat_relationships[relationship] = (tree_node, child)
