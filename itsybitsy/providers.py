@@ -7,7 +7,7 @@ import sys
 from termcolor import colored
 from typing import Dict, List, Optional
 
-from . import constants
+from . import constants, logs
 from .charlotte_web import Hint
 from .node import NodeTransport
 
@@ -22,6 +22,10 @@ class TimeoutException(Exception):
 
 class ProviderClobberException(Exception):
     """An exception indicating a provider is clobbering the namespace of another provider"""
+
+
+class CreateNodeTransportException(Exception):
+    """An exception during creation of Node Transport"""
 
 
 class ProviderArgParser:
@@ -162,16 +166,45 @@ def _enabled_providers() -> List[ProviderInterface]:
     return [cls for cls in ProviderInterface.__subclasses__() if cls.ref() not in constants.ARGS.disable_providers]
 
 
-def get(provider_ref: str) -> ProviderInterface:
-    """
-    Take a provider string reference and return a singleton instance of the provider
-
-    :param provider_ref:
-    :return:
-    """
+def get_provider_by_ref(provider_ref: str) -> ProviderInterface:
     try:
         return provider_registry[provider_ref]
     except KeyError as e:
         print(colored(f"Attempted to load invalid provider: {provider_ref}", 'red'))
         print(e, 'yellow')
         sys.exit(1)
+
+
+def parse_crawl_strategy_response(response: str, address: str, command: str) -> List[NodeTransport]:
+    lines = response.splitlines()
+    if len(lines) < 2:
+        return []
+    header_line = lines.pop(0)
+    node_transports = [_create_node_transport_from_crawl_strategy_response_line(header_line, data_line)
+                       for data_line in lines]
+    logs.logger.debug(f"Found {len(node_transports)} children for {address}, command: \"{command[:100]}\"..")
+    return node_transports
+
+
+def _create_node_transport_from_crawl_strategy_response_line(header_line: str, data_line: str):
+    field_map = {
+        'mux': 'protocol_mux',
+        'address': 'address',
+        'id': 'debug_identifier',
+        'conns': 'num_connections',
+        'metadata': 'metadata'
+    }
+    fields = {}
+    for label, value in zip(header_line.split(), data_line.split()):
+        if label == 'address' and value == 'null':
+            continue
+        fields[label] = value
+
+    # field transforms/requirements
+    if 'mux' not in fields:
+        raise CreateNodeTransportException(f"protocol_mux missing from crawl strategy results")
+    if 'metadata' in fields:
+        fields['metadata'] = {k: v for k, v in [i.split('=') for i in fields['metadata'].split(',')]}
+    if 'conns' in fields:
+        fields['conns'] = int(fields['conns'])
+    return NodeTransport(**{field_map[k]: v for k, v in fields.items() if v})

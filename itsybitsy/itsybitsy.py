@@ -154,7 +154,7 @@ async def crawl_water_spout():
                 protocol=charlotte_web.PROTOCOL_SEED,
                 protocol_mux='seed',
                 provider=provider,
-                containerized=providers.get(provider).is_container_platform(),
+                containerized=providers.get_provider_by_ref(provider).is_container_platform(),
                 from_hint=False,
                 address=address
             )

@@ -18,7 +18,7 @@ from termcolor import colored
 from typing import List, Optional
 
 from .. import constants, logs
-from ..providers import ProviderArgParser, ProviderInterface, TimeoutException
+from ..providers import ProviderArgParser, ProviderInterface, TimeoutException, parse_crawl_strategy_response
 from ..node import NodeTransport
 
 bastion: Optional[SSHClientConnection] = None
@@ -75,18 +75,7 @@ class ProviderSSH(ProviderInterface):
         response = await connection.run(command)
         if response.stdout.strip().startswith('ERROR:'):
             raise Exception('CRAWL ERROR: ' + response.stdout.strip().replace("\n", "\t"))
-        node_transports = [_create_node_transport(line) for line in response.stdout.strip().splitlines()]
-        logs.logger.debug(f"Found {len(node_transports)} children for {address}, command: \"{command[:100]}\"..")
-        return node_transports
-
-
-def _create_node_transport(line: str):
-    columns = line.split()
-    child_protocol_mux = columns[0]
-    child_address = columns[1] if len(columns) > 1 and columns[1] != 'null' else None
-    child_debug_identifier = columns[2] if len(columns) > 2 else None
-    child_num_connections = int(columns[3]) if len(columns) > 3 else None
-    return NodeTransport(child_protocol_mux, child_address, child_debug_identifier, child_num_connections)
+        return parse_crawl_strategy_response(response.stdout.strip(), address, command)
 
 
 async def _get_connection(host: str, retry_num=0) -> asyncssh.SSHClientConnection:

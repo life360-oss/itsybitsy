@@ -1,6 +1,6 @@
 import pytest
 
-from itsybitsy import providers
+from itsybitsy import providers, node
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +56,7 @@ def test_init_case_builtin_providers_disableable(cli_args_mock, builtin_provider
     providers.init()
     for provider in builtin_providers:
         with pytest.raises(SystemExit) as e_info:
-            providers.get(provider)
+            providers.get_provider_by_ref(provider)
         assert 1 == e_info.value.code
 
 
@@ -85,7 +85,7 @@ def test_init_case_provider_subclass_registered():
 
 
 def test_get_case_provider_present():
-    """Tests that a provider set in init() is get-able by get()"""
+    """Tests that a provider set in init() is get_provider_by_ref-able by get_provider_by_ref()"""
     # arrange
     ref = 'subclasspresent'
 
@@ -98,7 +98,7 @@ def test_get_case_provider_present():
     providers.init()
 
     # assert
-    assert ProviderTestProviderPresent.__name__ == providers.get(ref).__class__.__name__
+    assert ProviderTestProviderPresent.__name__ == providers.get_provider_by_ref(ref).__class__.__name__
 
 
 def test_get_case_provider_absent():
@@ -108,7 +108,67 @@ def test_get_case_provider_absent():
 
     # assert
     with pytest.raises(SystemExit) as e_info:
-        providers.get('not_present')
+        providers.get_provider_by_ref('not_present')
     assert 1 == e_info.value.code
+
+
+@pytest.mark.parametrize('crawl_strategy_response', ['', 'foo bar'])
+def test_parse_crawl_strategy_response_case_no_data_lines(crawl_strategy_response):
+    # arrange/act/assert
+    assert providers.parse_crawl_strategy_response(crawl_strategy_response, '', '') == []
+
+
+def test_parse_crawl_strategy_response_case_no_mux():
+    # arrange
+    protocol_mux = 'foo'
+    crawl_strategy_response = f"address\n{protocol_mux}"
+    expected = [node.NodeTransport(protocol_mux)]
+
+    # act/assert
+    with pytest.raises(providers.CreateNodeTransportException):
+        providers.parse_crawl_strategy_response(crawl_strategy_response, '', '')
+
+
+def test_parse_crawl_strategy_response_case_mux_only():
+    # arrange
+    protocol_mux = 'foo'
+    crawl_strategy_response = f"mux\n{protocol_mux}"
+    expected = [node.NodeTransport(protocol_mux)]
+
+    # act/assert
+    assert providers.parse_crawl_strategy_response(crawl_strategy_response, '', '') == expected
+
+
+def test_parse_crawl_strategy_response_case_all_fields():
+    # arrange
+    metadata_1_key, metadata_1_val = 'pet', 'dog'
+    mux, address, id, conns, metadata = 'foo', 'bar', 'baz', '100', f'{metadata_1_key}={metadata_1_val}'
+    crawl_strategy_response = f"mux address id conns metadata\n" \
+                              f"{mux} {address} {id} {conns} {metadata}"
+    expected = [node.NodeTransport(mux, address, id, int(conns), {metadata_1_key: metadata_1_val})]
+
+    # act/assert
+    assert providers.parse_crawl_strategy_response(crawl_strategy_response, '', '') == expected
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

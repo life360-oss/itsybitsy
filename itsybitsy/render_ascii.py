@@ -28,6 +28,8 @@ warning_messages = {
     'CYCLE': Template("service '$service_name' discovered as a parent of itself!"),
     'DEFUNCT': Template("service '$service_name' configuration present on parent, but it not in use!")
 }
+_sleep_for_humans_seconds: float = .01
+_sleep_for_humans_counter = 0
 
 
 async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.stderr,
@@ -63,7 +65,7 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
             if node.crawl_complete(depth):
                 # this sleep allows human eyes to comprehend output
                 if print_slowly_for_humans:
-                    await asyncio.sleep(.01)
+                    await asyncio.sleep(_get_sleep_for_humans_seconds())
                 is_last_sibling = 1 == len(nodes_to_render)
 
                 # set up recursive children's parent back-reference
@@ -93,6 +95,15 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
                               f"nodes at depth {str(len(parents))}...")
             logs.logger.debug(nodes_to_render)
             await asyncio.sleep(5)
+
+
+def _get_sleep_for_humans_seconds() -> float:
+    global _sleep_for_humans_counter, _sleep_for_humans_seconds
+    if _sleep_for_humans_counter == 100:
+        _sleep_for_humans_seconds /= 1.2
+        _sleep_for_humans_counter = 0
+    _sleep_for_humans_counter += 1
+    return _sleep_for_humans_seconds
 
 
 def _render_node_display_prefix(parents: List[Ancestor]) -> str:

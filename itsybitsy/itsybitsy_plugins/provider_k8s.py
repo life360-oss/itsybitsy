@@ -17,7 +17,7 @@ from typing import Dict, List, Optional
 from .. import constants
 from ..charlotte_web import Hint
 from ..node import NodeTransport
-from ..providers import ProviderArgParser, ProviderInterface
+from ..providers import ProviderArgParser, ProviderInterface, parse_crawl_strategy_response
 
 pod_cache: Dict[str, client.models.V1Pod] = {}
 
@@ -65,18 +65,7 @@ class ProviderKubernetes(ProviderInterface):
             ret = stream(self.api.connect_get_namespaced_pod_exec, address, constants.ARGS.k8s_namespace,
                          container=container.name, command=exec_command
                          , stderr=True, stdin=False, stdout=True, tty=False)
-
-            for i in ret.splitlines():
-                # parse columns
-                columns = i.split()
-                child_protocol_mux = columns[0]
-                child_address = columns[1] if len(columns) > 1 and columns[1] != 'null' else None
-                child_debug_identifier = columns[2] if len(columns) > 2 else None
-                child_num_connections = int(columns[3]) if len(columns) > 3 else None
-                node_transports.append(NodeTransport(
-                    child_protocol_mux, child_address, child_debug_identifier, child_num_connections)
-                )
-
+            node_transports.extend(parse_crawl_strategy_response(ret, address, shell_command))
         return node_transports
 
     async def take_a_hint(self, hint: Hint) -> List[NodeTransport]:

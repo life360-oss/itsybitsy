@@ -18,11 +18,13 @@ class NodeTransport:
         address: the node address.  e.g. "IP address" or k8s pod name
         debug_identifier: like the "name" of the service - but it is not the official name and only used for debug/logs
         num_connections: optional num_connections.  if 0, node will be marked as "DEFUNCT"
+        metadata: optional key-value pairs of metadata.  not used by core but useful to custom plugins
     """
     protocol_mux: str
     address: Optional[str] = None
     debug_identifier: Optional[str] = None
     num_connections: Optional[int] = None
+    metadata: Optional[dict] = field(default_factory=dict)
 
 
 @dataclass
@@ -38,6 +40,7 @@ class Node:
     children: Dict[str, 'Node'] = None
     warnings: dict = field(default_factory=dict)
     errors: dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     __type__: str = 'Node'  # for json serialization/deserialization
 
     def is_database(self):

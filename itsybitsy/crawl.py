@@ -92,10 +92,6 @@ def _get_crawl_result_with_exception_handling(future: asyncio.Future) -> (str, D
 
 
 async def _open_connections(tree: Dict[str, Node], ancestors: List[str]) -> (list, Dict[str, Node]):
-    """
-    We use sys.exit() to ensure the entire program is halted and not simply the individual task in which an exception
-    was raised.
-    """
     connectable_tree = _filter_skipped_nodes_and_add_errors(tree)
     conns = await _gather_connections(connectable_tree)
     exceptions = [(ref, e) for ref, e in zip(list(connectable_tree), conns) if isinstance(e, Exception)]
@@ -120,7 +116,7 @@ def _filter_skipped_nodes_and_add_errors(tree: Dict[str, Node]) -> Dict[str, Nod
 async def _gather_connections(tree: Dict[str, Node]):
     return await asyncio.gather(
         *[asyncio.wait_for(
-            _open_connection(node.address, providers.get(node.provider)), constants.ARGS.timeout
+            _open_connection(node.address, providers.get_provider_by_ref(node.provider)), constants.ARGS.timeout
         ) for node_ref, node in tree.items()],
         return_exceptions=True
     )
@@ -161,7 +157,7 @@ async def _lookup_service_names(tree: Dict[str, Node], conns: list) -> (List[str
     # lookup_name / detect cycles
     service_names = await asyncio.gather(
         *[asyncio.wait_for(
-            _lookup_service_name(node.address, providers.get(node.provider), conn),
+            _lookup_service_name(node.address, providers.get_provider_by_ref(node.provider), conn),
             constants.ARGS.timeout) for node, conn in zip(tree.values(), conns)],
         return_exceptions=True
     )
@@ -205,7 +201,7 @@ async def _crawl_with_hints(provider_ref: str, node_ref: str, address: str, serv
 
     logs.logger.debug(f"Crawling with charlotte/web for {node_ref}")
     tasks, crawl_strategies = _compile_crawl_tasks_and_crawl_strategies(address, service_name,
-                                                                        providers.get(provider_ref), connection)
+                                                                        providers.get_provider_by_ref(provider_ref), connection)
 
     # if there are any timeouts or exceptions, panic and run away! we don't want an incomplete graph to look complete
     crawl_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -215,6 +211,7 @@ async def _crawl_with_hints(provider_ref: str, node_ref: str, address: str, serv
             print(colored(f"Timeout when attempting to crawl service: {service_name}, node_ref: {node_ref}", 'red'))
             print(colored(f"Connection object: {connection}:", 'yellow'))
             print(colored(vars(connection), 'yellow'))
+        print(f"{type(crawl_exceptions[0])}({crawl_exceptions[0]})")
         raise crawl_exceptions[0]
 
     # parse returned NodeTransport objects to Node objects
@@ -250,7 +247,7 @@ def _compile_crawl_tasks_and_crawl_strategies(address: str, service_name: str, p
     # take hints
     for hint in [hint for hint in charlotte_web.hints(service_name)
                  if hint.instance_provider not in constants.ARGS.disable_providers]:
-        hint_provider = providers.get(hint.instance_provider)
+        hint_provider = providers.get_provider_by_ref(hint.instance_provider)
         tasks.append(asyncio.wait_for(hint_provider.take_a_hint(hint), timeout=constants.ARGS.timeout))
         crawl_strategies.append(
             replace(
@@ -281,10 +278,11 @@ def _create_node(cs_used: CrawlStrategy, node_transport: NodeTransport) -> (str,
         protocol=cs_used.protocol,
         protocol_mux=node_transport.protocol_mux,
         provider=provider,
-        containerized=providers.get(provider).is_container_platform(),
+        containerized=providers.get_provider_by_ref(provider).is_container_platform(),
         from_hint=from_hint,
         address=node_transport.address,
-        service_name=node_transport.debug_identifier if from_hint else None
+        service_name=node_transport.debug_identifier if from_hint else None,
+        metadata=node_transport.metadata
     )
 
     # warnings/errors
