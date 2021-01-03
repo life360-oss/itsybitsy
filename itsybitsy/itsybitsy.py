@@ -165,6 +165,8 @@ def _create_outputs_directory_if_absent():
 
 
 def _render(tree: Dict[str, node.Node]) -> None:
+    if not constants.ARGS.output:
+        return
     for renderer_ref in constants.ARGS.output:
         renderer = renderers.get_renderer_by_ref(renderer_ref)
         renderer.render(tree)
