@@ -148,11 +148,33 @@
 * [x] TIMEOUT: (crawl) robust provider timeout and exception handling
 * [x] OBSCURIFIER (render_*): obscurifier for output
 * [x] BUG: fix namespace package not being include in dist
-* [ ] DOCS: remove non obfuscated example video from README
-* [ ] LOGGER: rewrite logger access for community standards
-* [ ] PLUGPLAY: out of the box functionality by moving TCP to a "builtin" CrawlStrategy and using `hostname` or default service name
-* [ ] REFACTOR: (providers): rewrite take_a_hint to not return a list, just return a single NodeTransport
-* [ ] DOCS: rewrite docs in sphinx style and prepare for export to readthedocs.org
+
+# V5.PROMVIZ
+* [~] promviz render output
+  * [x] render nsq
+  * [x] haproxy http enabled in prod
+  * [x] render haproxy
+  * [x] render proxysql
+  * [x] BUG: geonames orphaned due to no data returned query
+  * [x] render haproxy tcp mode
+  * [ ] render elasticache
+  * [ ] render kinesis
+  * [ ] render custom queries
+* [x] merge hints
+* [x] add missing hints
+* [x] render_promviz tests
+* [x] refactor renderers to plugins
+* [x] fix plugin imports
+* [x] refactor/DRY providers/renderes to plugin_core.py
+* [x] how to organize plugin tests?
+* [ ] move constants.ARGS to cli_args.ARGS
+* [ ] update examples plugins/crawl strategies/docs
+* [~] PLUGINS: BUG namespace plugins aren't pip install --editable-able
+
+# V5.1 NICETOHAVES
+* [ ] ci/cd run tests
+* [ ] ci/cd publish pypy package
+* [ ] annotate services w/ links to wiki/github
 
 # Backlog
 
@@ -172,6 +194,14 @@
 * [ ] BUG: where is `cx-dvb`?? 
 * [ ] REFACTOR: consolidate Node::crawl_complete and crawl.py::_crawlable()
 * [ ] BUG: required args showing as optional in --help
+* [ ] DOCS: remove non obfuscated example video from README
+* [ ] LOGGER: rewrite logger access for community standards
+* [ ] PLUGPLAY: out of the box functionality by moving TCP to a "builtin" CrawlStrategy and using `hostname` or default service name
+* [ ] REFACTOR: (providers): rewrite take_a_hint to not return a list, just return a single NodeTransport
+* [ ] DOCS: rewrite docs in sphinx style and prepare for export to readthedocs.org
+
+## Renderers
+* test coverage for renderers.py
 
 ## Remder Ascii
 * [ ] FEATURE: merge hints in ascii output
@@ -195,17 +225,25 @@
 * [ ] FEATURE: Netstat: use matchAddress for HAProxy crawl strategies to avoid timeout to RDS hostnames
 * [ ] FEATURE: crawl downstream - ability to specify more providers args per provider (so that k8s can selectively crawl containers)
 
+## Providers
+* [ ] BUG: cli arg --disable-providers is broken
+
 
 ## Provider SSH
 * [ ] FEATURE: revisit whether `occupy_one_sempahore_space` is working (to dynamically configure --concurrency) 
 * [ ] FEATURE: still getting ssh connections errors sometimes with out --concurrency=10
 * [ ] FEATURE: configurable "~/.ssh/config" SSH profile
 * [ ] REFACTOR (provider_ssh): we shouldn't use known_hosts=None for security reasons
+* [ ] TEST: write tests for provider_ssh
 
 ## Provider AWS
 * [ ] FEATURE: lookup_name is slow, use async
 * [ ] CRAWL: dynamodb
 * [ ] CRAWL: SQS
+* [ ] TEST: write tests for provider_aws
+
+## Provider K8S
+* [ ] TEST: write tests for provider_k8s
 
 ## Charlotte
 * [ ] FEATURE (charlotte): yaml validation by schema

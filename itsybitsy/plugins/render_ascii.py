@@ -12,8 +12,22 @@ from string import Template
 from termcolor import colored
 from typing import List, Dict
 
-from . import constants, logs
-from .node import Node
+from itsybitsy import constants, logs, renderers
+from itsybitsy.node import Node
+
+
+class RendererAscii(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'ascii'
+
+    def render(self, tree: Dict[str, Node]):
+        asyncio.get_event_loop().run_until_complete(render_tree(tree, [], sys.stdout))
+
+    @staticmethod
+    def register_cli_args(argparser: renderers.RendererArgParser):
+        argparser.add_argument('--verbose', action='store_true', help='Verbose mode for ascii renderer')
+
 
 live_render_lock = asyncio.Lock()
 Ancestor = namedtuple('Ancestor', 'last_sibling spacing')
@@ -28,6 +42,8 @@ warning_messages = {
     'CYCLE': Template("service '$service_name' discovered as a parent of itself!"),
     'DEFUNCT': Template("service '$service_name' configuration present on parent, but it not in use!")
 }
+_sleep_for_humans_seconds: float = .01
+_sleep_for_humans_counter = 0
 
 
 async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.stderr,
@@ -49,7 +65,7 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
     :return: None
     """
     await _wait_for_service_names(nodes, len(parents))
-    nodes_merged = _merge_nodes_by_service_name(nodes)
+    nodes_merged = _merge_nodes_by_service_name(renderers.merge_hints(nodes))
 
     depth = len(parents)
     nodes_to_render = nodes_merged.copy()
@@ -63,7 +79,7 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
             if node.crawl_complete(depth):
                 # this sleep allows human eyes to comprehend output
                 if print_slowly_for_humans:
-                    await asyncio.sleep(.01)
+                    await asyncio.sleep(_get_sleep_for_humans_seconds())
                 is_last_sibling = 1 == len(nodes_to_render)
 
                 # set up recursive children's parent back-reference
@@ -93,6 +109,15 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
                               f"nodes at depth {str(len(parents))}...")
             logs.logger.debug(nodes_to_render)
             await asyncio.sleep(5)
+
+
+def _get_sleep_for_humans_seconds() -> float:
+    global _sleep_for_humans_counter, _sleep_for_humans_seconds
+    if _sleep_for_humans_counter == 100:
+        _sleep_for_humans_seconds /= 1.2
+        _sleep_for_humans_counter = 0
+    _sleep_for_humans_counter += 1
+    return _sleep_for_humans_seconds
 
 
 def _render_node_display_prefix(parents: List[Ancestor]) -> str:
@@ -144,6 +169,9 @@ def _render_node(node: Node, depth: int, prefix: str, is_last_sibling: bool, out
         bud = '{}'.format('└' if is_last_sibling else '|') if not node.warnings.get('CYCLE') else '<'
         branch += f"{bud}--{node.protocol.ref}--{terminus} "
 
+    # hint display
+    info = colored('{INFO:FROM_HINT} ', 'cyan') if node.from_hint else ''
+
     # concise warning display
     concise_warnings = ''
     if not constants.ARGS.render_ascii_verbose and node.warnings:
@@ -163,7 +191,8 @@ def _render_node(node: Node, depth: int, prefix: str, is_last_sibling: bool, out
 
     # print node
     address = f" ({node.address})" if constants.ARGS.render_ascii_verbose else ''
-    print(f"{prefix}{branch}{concise_warnings}{concise_errors}{service_name} [{protocol_mux}]{address}", file=out)
+    line = f"{prefix}{branch}{info}{concise_warnings}{concise_errors}{service_name} [{protocol_mux}]{address}"
+    print(line, file=out)
 
 
 def _render_node_errs_warns(node: Node, error_prefix: str, out):
@@ -177,12 +206,15 @@ def _render_node_errs_warns(node: Node, error_prefix: str, out):
     """
     # errors/warnings
     error_messages = {
+        'CONNECT_SKIPPED': f"service detected on {node.protocol.ref}:{node.protocol_mux}, however name discovery"
+                           f"and crawling skipped by configuration!",
         'NULL_ADDRESS': f"service '{node.service_name}' detected but an instance address is not available to crawl!",
         'TIMEOUT': f"SSH timeout connecting to service:'{node.service_name}' at address: '{node.address}'",
         'AWS_LOOKUP_FAILED': f"AWS name lookup failed for :'{_synthesize_node_ref(node, 'UNKNOWN')}'"
                              f" at address: '{node.address}'"
     }
     warning_messages = {
+        'CRAWL_SKIPPED': f"service '{node.service_name}' discovered but crawling skipped by configuration",
         'CYCLE': f"service '{node.service_name}' discovered as a parent of itself!",
         'DEFUNCT': f"service '{node.service_name}' configuration present on parent, but it not in use!"
     }

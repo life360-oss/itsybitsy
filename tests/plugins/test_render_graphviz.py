@@ -1,15 +1,8 @@
 import pytest
 from dataclasses import replace
 
-from itsybitsy import constants, render_graphviz
-
-
-@pytest.fixture
-def tree_named(tree):
-    """single node tree fixture - where the node has the service_name field filled out"""
-    list(tree.values())[0].service_name = 'dummy'
-
-    return tree
+from itsybitsy import constants
+from itsybitsy.plugins import render_graphviz
 
 
 @pytest.fixture(autouse=True)
@@ -335,7 +328,7 @@ def test_render_tree_case_node_hint_merged(containerized, shape_string, tree_nam
            f"({error},HINT)\" color=\"red:blue\" penwidth=3 style=bold]" in captured.out
 
 
-def test_render_tree_case_node_nonhint_not_merged(tree, protocol_fixture, node_fixture_factory, capsys):
+def test_render_tree_case_node_nonhint_not_merged(tree_named, protocol_fixture, node_fixture_factory, capsys):
     """
     Ensures that 2 children on the same protocol/mux are not accidentally merged into one
     Ensures that 2 children not on the same protocol/mux are not accidentally merged into one
@@ -354,10 +347,10 @@ def test_render_tree_case_node_nonhint_not_merged(tree, protocol_fixture, node_f
     child_3.protocol = protocol_fixture
     child_3.protocol_mux = protocol_mux_2
 
-    list(tree.values())[0].children = {'child1': child_1, 'child2': child_2, 'child3': child_3}
+    list(tree_named.values())[0].children = {'child1': child_1, 'child2': child_2, 'child3': child_3}
 
     # act
-    render_graphviz.render_tree(tree, True)
+    render_graphviz.render_tree(tree_named, True)
     captured = capsys.readouterr()
 
     # assert

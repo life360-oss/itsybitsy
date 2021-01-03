@@ -8,7 +8,7 @@ from itsybitsy import charlotte
 from itsybitsy import charlotte_web
 from itsybitsy import constants
 from itsybitsy import node
-from itsybitsy import render_json
+from itsybitsy.plugins import render_json
 
 
 @pytest.fixture

@@ -19,7 +19,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/life360/itsybitsy",
-    packages=['itsybitsy', 'itsybitsy.itsybitsy_plugins'],
+    packages=['itsybitsy', 'itsybitsy.plugins'],
     entry_points={
         "console_scripts": ['itsybitsy = itsybitsy.itsybitsy:main']
     },

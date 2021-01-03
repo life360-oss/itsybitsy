@@ -34,7 +34,7 @@ def mock_provider_ref() -> str:
 def provider_mock(mocker, mock_provider_ref) -> MagicMock:
     provider_mock = mocker.patch('itsybitsy.providers.ProviderInterface', autospec=True)
     provider_mock.ref.return_value = mock_provider_ref
-    mocker.patch('itsybitsy.providers.get', return_value=provider_mock)
+    mocker.patch('itsybitsy.providers.get_provider_by_ref', return_value=provider_mock)
 
     return provider_mock
 
@@ -420,7 +420,7 @@ async def test_crawl_case_hint_attributes_set(tree, provider_mock, hint_mock, mo
     hint_nt = node.NodeTransport('dummy_protocol_mux', 'dummy_address', 'dummy_debug_id')
     provider_mock.take_a_hint.return_value = [hint_nt]
     provider_mock.lookup_name.side_effect = ['dummy', None]
-    providers_get_mock = mocker.patch('itsybitsy.providers.get', return_value=provider_mock)
+    providers_get_mock = mocker.patch('itsybitsy.providers.get_provider_by_ref', return_value=provider_mock)
 
     # act
     await crawl.crawl(tree, [])

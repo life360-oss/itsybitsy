@@ -15,10 +15,11 @@ from botocore.exceptions import ClientError
 from termcolor import colored
 from typing import List, Optional
 
-from .. import constants, logs
-from ..node import NodeTransport
-from ..charlotte_web import Hint
-from ..providers import ProviderArgParser, ProviderInterface
+from itsybitsy import constants, logs
+from itsybitsy.node import NodeTransport
+from itsybitsy.charlotte_web import Hint
+from itsybitsy.providers import ProviderInterface
+from itsybitsy.plugin_core import PluginArgParser
 
 tag_name_pos = 0
 tag_value_pos = 1
@@ -37,7 +38,7 @@ class ProviderAWS(ProviderInterface):
         return 'aws'
 
     @staticmethod
-    def register_cli_args(argparser: ProviderArgParser):
+    def register_cli_args(argparser: PluginArgParser):
         argparser.add_argument('--profile',  help='AWS Credentials file profile to use.  '
                                                   'This will override the AWS_PROFILE environment variable.')
         argparser.add_argument('--service-name-tag', required=True, metavar='TAG',

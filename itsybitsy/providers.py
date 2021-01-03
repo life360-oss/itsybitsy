@@ -2,69 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import configargparse
-import re
-import sys
-from termcolor import colored
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from . import constants
+from . import constants, logs
 from .charlotte_web import Hint
 from .node import NodeTransport
-
-
-class ProviderRefNotImplemented(Exception):
-    """Exception thrown if provider has not implemented ref() method"""
+from .plugin_core import PluginInterface, PluginFamilyRegistry
 
 
 class TimeoutException(Exception):
     """Timeout occurred connecting to the provider"""
 
 
-class ProviderClobberException(Exception):
-    """An exception indicating a provider is clobbering the namespace of another provider"""
+class CreateNodeTransportException(Exception):
+    """An exception during creation of Node Transport"""
 
 
-class ProviderArgParser:
-    def __init__(self, prefix: str, argparser: configargparse.ArgParser):
-        self._prefix = prefix
-        self._argparser = argparser
-
-    def add_argument(self, option_name: str, **kwargs):
-        """
-        A wrapper method on top of the classic ArgParse::add_argument().  All keyword arguments are supported, however
-        only a single option_name is allowed, such as '--foo-argument'.  Argument registered here will be prepended
-        with the ProviderInterface() ref in order to avoid namespace collisions between provider plugins.  For example
-        '--foo-argument' registered by a ProviderInterface() with ref() = 'bar' will result in a CLI arg of
-        '--bar-foo-argument'.
-
-        :param option_name: such as '--foo-something'
-        :param kwargs: pass through kwargs for ArgParse::add_argument, such as "required", "type", "nargs", etc.
-        :return:
-        """
-        option_name = f"{self._prefix}-{option_name}"
-        option_name_with_dashes_consoliated = re.sub('-+', '-', option_name)
-        option_name_with_leading_dashes = f"--{option_name_with_dashes_consoliated}"
-        self._argparser.add_argument(option_name_with_leading_dashes, **kwargs)
-
-
-class ProviderInterface:
-    @staticmethod
-    def ref() -> str:
-        """
-        Every provider it identified by a unique "reference" or "ref" which much be declared by implemented this
-        public abstract method.
-        :return: the unique reference or "ref" of the provider.
-        """
-        raise ProviderRefNotImplemented()
-
-    @staticmethod
-    def register_cli_args(argparser: ProviderArgParser):
-        """
-        Each provider has a chance to register custom CLI args
-        :param argparser:
-        :return:
-        """
-
+class ProviderInterface(PluginInterface):
     @staticmethod
     def is_container_platform() -> bool:
         """
@@ -131,47 +85,51 @@ class ProviderInterface:
         return []
 
 
-provider_registry:  Dict[str, ProviderInterface] = {}
+_provider_registry = PluginFamilyRegistry(ProviderInterface)
 
 
 def parse_provider_args(argparser: configargparse.ArgParser):
-    """
-    Providers are given an opportunity to register custom CLI arguments with this argparser
-
-    :param argparser:
-    :return:
-    """
-    for provider_class in ProviderInterface.__subclasses__():
-        provider_argparser = ProviderArgParser(provider_class.ref(), argparser)
-        provider_class.register_cli_args(provider_argparser)
+    _provider_registry.parse_plugin_args(argparser)
 
 
-def init():
-    """
-    Initialization registers each provider in the provider_registry
-
-    :return:
-    """
-    for provider_class in _enabled_providers():
-        if provider_class.ref() in provider_registry:
-            raise ProviderClobberException(f"Provider {provider_class.ref()} already registered!")
-        provider_registry[provider_class.ref()] = provider_class()
+def register_providers():
+    _provider_registry.register_plugins(constants.ARGS.disable_providers)
 
 
-def _enabled_providers() -> List[ProviderInterface]:
-    return [cls for cls in ProviderInterface.__subclasses__() if cls.ref() not in constants.ARGS.disable_providers]
+def get_provider_by_ref(provider_ref: str) -> ProviderInterface:
+    return _provider_registry.get_plugin(provider_ref)
 
 
-def get(provider_ref: str) -> ProviderInterface:
-    """
-    Take a provider string reference and return a singleton instance of the provider
+def parse_crawl_strategy_response(response: str, address: str, command: str) -> List[NodeTransport]:
+    lines = response.splitlines()
+    if len(lines) < 2:
+        return []
+    header_line = lines.pop(0)
+    node_transports = [_create_node_transport_from_crawl_strategy_response_line(header_line, data_line)
+                       for data_line in lines]
+    logs.logger.debug(f"Found {len(node_transports)} children for {address}, command: \"{command[:100]}\"..")
+    return node_transports
 
-    :param provider_ref:
-    :return:
-    """
-    try:
-        return provider_registry[provider_ref]
-    except KeyError as e:
-        print(colored(f"Attempted to load invalid provider: {provider_ref}", 'red'))
-        print(e, 'yellow')
-        sys.exit(1)
+
+def _create_node_transport_from_crawl_strategy_response_line(header_line: str, data_line: str):
+    field_map = {
+        'mux': 'protocol_mux',
+        'address': 'address',
+        'id': 'debug_identifier',
+        'conns': 'num_connections',
+        'metadata': 'metadata'
+    }
+    fields = {}
+    for label, value in zip(header_line.split(), data_line.split()):
+        if label == 'address' and value == 'null':
+            continue
+        fields[label] = value
+
+    # field transforms/requirements
+    if 'mux' not in fields:
+        raise CreateNodeTransportException(f"protocol_mux missing from crawl strategy results")
+    if 'metadata' in fields:
+        fields['metadata'] = dict(tuple(i.split('=') for i in fields['metadata'].split(',')))
+    if 'conns' in fields:
+        fields['conns'] = int(fields['conns'])
+    return NodeTransport(**{field_map[k]: v for k, v in fields.items() if v})
