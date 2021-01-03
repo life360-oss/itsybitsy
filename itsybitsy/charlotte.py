@@ -100,11 +100,11 @@ HINT_CRAWL_STRATEGY = CrawlStrategy('Hint Crawl Strategy', 'Hint', charlotte_web
 
 
 def init():
-    """ Load yaml config for charlotte
-
-    :return:
-    """
     charlotte_web.spin_up()
+    _load_crawl_strategies()
+
+
+def _load_crawl_strategies():
     for file in os.listdir(constants.CHARLOTTE_DIR):
         if file.endswith('.yaml'):
             with open(os.path.join(constants.CHARLOTTE_DIR, file), 'r') as stream:

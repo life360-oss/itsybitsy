@@ -12,8 +12,22 @@ from string import Template
 from termcolor import colored
 from typing import List, Dict
 
-from . import constants, logs, render_helpers
-from .node import Node
+from itsybitsy import constants, logs, renderers
+from itsybitsy.node import Node
+
+
+class RendererAscii(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'ascii'
+
+    def render(self, tree: Dict[str, Node]):
+        asyncio.get_event_loop().run_until_complete(render_tree(tree, [], sys.stdout))
+
+    @staticmethod
+    def register_cli_args(argparser: renderers.RendererArgParser):
+        argparser.add_argument('--verbose', action='store_true', help='Verbose mode for ascii renderer')
+
 
 live_render_lock = asyncio.Lock()
 Ancestor = namedtuple('Ancestor', 'last_sibling spacing')
@@ -51,7 +65,7 @@ async def render_tree(nodes: Dict[str, Node], parents: List[Ancestor], out=sys.s
     :return: None
     """
     await _wait_for_service_names(nodes, len(parents))
-    nodes_merged = _merge_nodes_by_service_name(render_helpers.merge_hints(nodes))
+    nodes_merged = _merge_nodes_by_service_name(renderers.merge_hints(nodes))
 
     depth = len(parents)
     nodes_to_render = nodes_merged.copy()

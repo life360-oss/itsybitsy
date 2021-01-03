@@ -1,7 +1,16 @@
-from . import node
+from itsybitsy import node, renderers
 from typing import Dict
 
 flat_relationships = {}
+
+
+class RendererGraphvizSource(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'text'
+
+    def render(self, tree: Dict[str, node.Node]):
+        render_tree(tree)
 
 
 def render_tree(tree: Dict[str, node.Node]) -> None:

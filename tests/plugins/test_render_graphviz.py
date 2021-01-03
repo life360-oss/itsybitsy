@@ -1,7 +1,8 @@
 import pytest
 from dataclasses import replace
 
-from itsybitsy import constants, render_graphviz
+from itsybitsy import constants
+from itsybitsy.plugins import render_graphviz
 
 
 @pytest.fixture(autouse=True)

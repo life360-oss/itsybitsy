@@ -14,10 +14,11 @@ from kubernetes.stream import stream
 from termcolor import colored
 from typing import Dict, List, Optional
 
-from .. import constants
-from ..charlotte_web import Hint
-from ..node import NodeTransport
-from ..providers import ProviderArgParser, ProviderInterface, parse_crawl_strategy_response
+from itsybitsy import constants
+from itsybitsy.charlotte_web import Hint
+from itsybitsy.node import NodeTransport
+from itsybitsy.providers import ProviderInterface, parse_crawl_strategy_response
+from itsybitsy.plugin_core import PluginArgParser
 
 pod_cache: Dict[str, client.models.V1Pod] = {}
 
@@ -32,7 +33,7 @@ class ProviderKubernetes(ProviderInterface):
         return 'k8s'
 
     @staticmethod
-    def register_cli_args(argparser: ProviderArgParser):
+    def register_cli_args(argparser: PluginArgParser):
         argparser.add_argument('--skip-containers', nargs='*', metavar='CONTAINER',
                                help='Ignore containers (uses substring matching)')
         argparser.add_argument('--namespace', required=True, help='k8s Namespace in which to discover services')

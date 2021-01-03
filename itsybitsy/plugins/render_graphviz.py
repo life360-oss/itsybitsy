@@ -4,12 +4,43 @@
 from graphviz import Digraph
 from typing import Dict
 
-from . import constants, render_helpers
-from .node import Node
+from itsybitsy import constants, renderers
+from itsybitsy.node import Node
 
 nodes_compiled = {}
 edges_compiled = []
 dot = None
+
+
+class RendererGraphviz(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'graphviz'
+
+    def render(self, tree: Dict[str, Node]):
+        render_tree(tree)
+
+    @staticmethod
+    def register_cli_args(argparser: renderers.RendererArgParser):
+        argparser.add_argument('--rankdir', choices=[constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT,
+                                                                     constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM,
+                                                                     constants.GRAPHVIZ_RANKDIR_AUTO],
+                               default=constants.GRAPHVIZ_RANKDIR_AUTO,
+                               help='Layout director, or "rankdir" for graphviz diagram.  '
+                                    f"{constants.GRAPHVIZ_RANKDIR_LEFT_TO_RIGHT} = \"Left-to-Right\", "
+                                    f"{constants.GRAPHVIZ_RANKDIR_TOP_TO_BOTTOM}=\"Top-to-Bottom\", "
+                                    f"\"{constants.GRAPHVIZ_RANKDIR_AUTO}\" automatically renders for best orientation")
+        argparser.add_argument('--highlight-services', nargs='+', metavar='SERVICE',
+                               help='A list of services to highlight in graphviz.')
+
+
+class RendererGraphvizSource(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'graphviz_source'
+
+    def render(self, tree: Dict[str, Node]):
+        render_tree(tree, True)
 
 
 def render_tree(tree: Dict[str, Node], source: bool = False) -> None:
@@ -60,7 +91,7 @@ def _compile_digraph(node_ref: str, node: Node, blocking_from_top: bool = True) 
     _compile_node(node, node_name, blocking_from_top)
     # child
     if node.children:
-        merged_children = render_helpers.merge_hints(node.children)
+        merged_children = renderers.merge_hints(node.children)
         for child_ref, child in merged_children.items():
             child: Node
             # defunct
@@ -109,4 +140,4 @@ def _compile_node(node: Node, name: str, blocking_from_top: bool) -> None:
 
 def _node_name(node: Node, node_ref: str) -> str:
     name = node.service_name or f"UNKNOWN\n({node_ref})"
-    return render_helpers.clean_service_name(name)
+    return renderers.clean_service_name(name)

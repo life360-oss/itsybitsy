@@ -17,9 +17,10 @@ from asyncssh import ChannelOpenError, SSHClientConnection
 from termcolor import colored
 from typing import List, Optional
 
-from .. import constants, logs
-from ..providers import ProviderArgParser, ProviderInterface, TimeoutException, parse_crawl_strategy_response
-from ..node import NodeTransport
+from itsybitsy import constants, logs
+from itsybitsy.providers import ProviderInterface, TimeoutException, parse_crawl_strategy_response
+from itsybitsy.plugin_core import PluginArgParser
+from itsybitsy.node import NodeTransport
 
 bastion: Optional[SSHClientConnection] = None
 connect_timeout = 5
@@ -35,7 +36,7 @@ class ProviderSSH(ProviderInterface):
         return 'ssh'
 
     @staticmethod
-    def register_cli_args(argparser: ProviderArgParser):
+    def register_cli_args(argparser: PluginArgParser):
         argparser.add_argument('--bastion-timeout', type=int, default=10, metavar='TIMEOUT',
                                help='Timeout in seconds to establish SSH connection to bastion (jump server)')
         argparser.add_argument('--concurrency', type=int, default=10, metavar='CONCURRENCY',

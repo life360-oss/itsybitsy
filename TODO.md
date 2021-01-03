@@ -158,13 +158,22 @@
   * [x] BUG: geonames orphaned due to no data returned query
   * [x] render haproxy tcp mode
   * [ ] render elasticache
+  * [ ] render kinesis
   * [ ] render custom queries
 * [x] merge hints
 * [x] add missing hints
 * [x] render_promviz tests
+* [x] refactor renderers to plugins
+* [x] fix plugin imports
+* [x] refactor/DRY providers/renderes to plugin_core.py
+* [x] how to organize plugin tests?
+* [ ] move constants.ARGS to cli_args.ARGS
+* [ ] update examples plugins/crawl strategies/docs
+* [~] PLUGINS: BUG namespace plugins aren't pip install --editable-able
+
+# V5.1 NICETOHAVES
 * [ ] ci/cd run tests
 * [ ] ci/cd publish pypy package
-* [ ] refactor renderers to plugins
 * [ ] annotate services w/ links to wiki/github
 
 # Backlog
@@ -191,6 +200,9 @@
 * [ ] REFACTOR: (providers): rewrite take_a_hint to not return a list, just return a single NodeTransport
 * [ ] DOCS: rewrite docs in sphinx style and prepare for export to readthedocs.org
 
+## Renderers
+* test coverage for renderers.py
+
 ## Remder Ascii
 * [ ] FEATURE: merge hints in ascii output
 
@@ -212,6 +224,9 @@
 * [ ] BUG: NSQ: misconfigured clients have null server (this is why we don't see rattail -> relapse), investigate & resolve
 * [ ] FEATURE: Netstat: use matchAddress for HAProxy crawl strategies to avoid timeout to RDS hostnames
 * [ ] FEATURE: crawl downstream - ability to specify more providers args per provider (so that k8s can selectively crawl containers)
+
+## Providers
+* [ ] BUG: cli arg --disable-providers is broken
 
 
 ## Provider SSH

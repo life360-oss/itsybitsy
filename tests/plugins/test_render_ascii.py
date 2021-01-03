@@ -1,4 +1,4 @@
-from itsybitsy import render_ascii
+from itsybitsy.plugins import render_ascii
 from itsybitsy.node import Node
 
 from dataclasses import replace

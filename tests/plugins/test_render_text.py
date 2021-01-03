@@ -1,4 +1,4 @@
-from itsybitsy import render_text
+from itsybitsy.plugins import render_text
 
 
 def test_render_tree(tree_stubbed_with_child, capsys):

@@ -5,10 +5,20 @@ import json
 from dataclasses import asdict, is_dataclass
 from typing import Dict
 
-from . import constants
-from .charlotte import CrawlStrategy
-from .charlotte_web import Protocol
-from .node import Node
+from itsybitsy import constants, renderers
+from itsybitsy.charlotte import CrawlStrategy
+from itsybitsy.charlotte_web import Protocol
+from itsybitsy.node import Node
+
+
+class RendererJson(renderers.RendererInterface):
+    @staticmethod
+    def ref() -> str:
+        return 'json'
+
+    def render(self, tree: Dict[str, Node]):
+        tree_with_args = _add_cli_args_to_json_tree(tree)
+        print(json.dumps(tree_with_args, cls=_EnhancedJSONEncoder))
 
 
 class _EnhancedJSONEncoder(json.JSONEncoder):
@@ -59,16 +69,6 @@ def dump(tree: Dict[str, Node], file: str = None) -> None:
     tree_with_args = _add_cli_args_to_json_tree(tree)
     with open(file, 'w+') as file_handle:
         json.dump(tree_with_args, file_handle, cls=_EnhancedJSONEncoder)
-
-
-def dumps(tree: Dict[str, Node]) -> None:
-    """
-    dump json of the tree to the screen
-    :param tree:
-    :return:
-    """
-    tree_with_args = _add_cli_args_to_json_tree(tree)
-    print(json.dumps(tree_with_args, cls=_EnhancedJSONEncoder))
 
 
 def _add_cli_args_to_json_tree(tree: Dict[str, Node]) -> dict:
