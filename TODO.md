@@ -199,6 +199,7 @@
 * [ ] PLUGPLAY: out of the box functionality by moving TCP to a "builtin" CrawlStrategy and using `hostname` or default service name
 * [ ] REFACTOR: (providers): rewrite take_a_hint to not return a list, just return a single NodeTransport
 * [ ] DOCS: rewrite docs in sphinx style and prepare for export to readthedocs.org
+* [ ] FEATURE: a new render format that has a predictable sort order, and on top of that the ability to diff
 
 ## Renderers
 * test coverage for renderers.py
@@ -224,6 +225,7 @@
 * [ ] BUG: NSQ: misconfigured clients have null server (this is why we don't see rattail -> relapse), investigate & resolve
 * [ ] FEATURE: Netstat: use matchAddress for HAProxy crawl strategies to avoid timeout to RDS hostnames
 * [ ] FEATURE: crawl downstream - ability to specify more providers args per provider (so that k8s can selectively crawl containers)
+* [ ] FEATURE: detect multiple downstream on same port with NetstatCrawlStrategy - it will only pick up the first
 
 ## Providers
 * [ ] BUG: cli arg --disable-providers is broken

@@ -14,6 +14,8 @@ hints:
       provider: "bar"                           # (str) - provider for the downstream node. Options: (`ssh`, `aws`)
       instance_provider: "aws"                  # (str) - instance provider, from which a instance of the service will be retrieved for crawling. Options: (`aws`)
 skips:              # a list of substrings for which services will be skipped if the $skip is a substring of the services name
-  - "foo-service"
-  - "bar-really-important-service"
-  - "baz-touchy-service"
+  protocol_muxes:   # these will not be crawled nor name_lookup'd
+    - "foo"
+  service_names:    # these will have namelookup performed, but not crawled
+    - "bar"
+    - "baz
