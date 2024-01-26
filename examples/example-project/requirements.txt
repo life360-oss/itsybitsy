@@ -1,1 +1,1 @@
-git+ssh://git@github.com/life360-oss/itsybitsy.git#egg=itsybitsy
+git+ssh://git@github.com/etherops/itsybitsy.git#egg=itsybitsy
