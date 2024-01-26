@@ -45,7 +45,7 @@ setup(
         ]
     },
     setup_requires=[
-        'wheel~=0.36.2'
+        'wheel>=0.36.2'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.8",
