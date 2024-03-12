@@ -24,28 +24,28 @@ setup(
         "console_scripts": ['itsybitsy = itsybitsy.itsybitsy:main']
     },
     install_requires=[
-        'asyncssh~=2.2.1',
-        'boto3~=1.16.42',
-        'configargparse~=1.2.3',
-        'coolname~=1.1.0',
-        'faker~=4.1.8',
-        'kubernetes~=11.0.0',
-        'paramiko~=2.7.2',
-        'pyyaml~=5.3.1',
-        'graphviz~=0.13.2',
-        'termcolor~=1.1.0',
+        'asyncssh~=2.14',
+        'boto3~=1.16',
+        'configargparse~=1.2',
+        'coolname~=2.0',
+        'faker>=4.1',
+        'kubernetes~=11.0',
+        'paramiko~=3.4',
+        'pyyaml~=6.0',
+        'graphviz>=0.13',
+        'termcolor~=2.0',
     ],
     extras_require={
         'test': [
-            'prospector~=1.2.0',
-            'pytest~=6.2.1 ',
-            'pytest-asyncio~=0.14.0',
-            'pytest-cov~=2.10.1',
-            'pytest-mock~=3.4.0'
+            'prospector~=1.2',
+            'pytest~=6.2',
+            'pytest-asyncio~=0.14',
+            'pytest-cov~=2.10',
+            'pytest-mock~=3.4'
         ]
     },
     setup_requires=[
-        'wheel>=0.36.2'
+        'wheel>=0.36'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.8",
